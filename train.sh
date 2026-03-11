@@ -29,7 +29,9 @@ accelerate launch train_controlnet.py \
  --caption_column="text" \
  --conditioning_image_column="conditioning_image" \
  --resolution=512 \
- --learning_rate=1e-5 \
+ --learning_rate=5e-6 \
+ --validation_steps=500 \
+ --num_validation_images=2 \
  --validation_image "./conditioning_image_1.png" "./conditioning_image_2.png" \
  --validation_prompt "red circle with blue background" "cyan circle with brown floral background" \
  --train_batch_size=1 \
@@ -38,4 +40,5 @@ accelerate launch train_controlnet.py \
  --checkpointing_steps=1000 \
  --use_8bit_adam \
  --enable_xformers_memory_efficient_attention \
- --set_grads_to_none
+ --set_grads_to_none \
+ --proportion_empty_prompts=0.05

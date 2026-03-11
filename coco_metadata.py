@@ -13,23 +13,33 @@ def create_metadata_file(coco_images_dir, captions_path, output_file):
         
     metadata = []
     
-    for image_file in os.listdir(coco_images_dir):
-        if image_file.endswith('.jpg'):
-            image_id = os.path.splitext(image_file)[0]
-            # Find the corresponding captions for this image
-            image_captions = [item['caption'] for item in captions_data['annotations'] if item['image_id'] == int(image_id)]
-            if image_captions:
-                # Use only the first caption for each image
-                random_caption = random.randint(1, 5)  # random number between 1 and 5 inclusive
-                metadata.append({
-                    "text": image_captions[random_caption - 1],  # get the random caption
-                    "image_file_name": os.path.join(coco_images_dir, image_file),
-                    "conditioning_image_file_name": os.path.join('conditioning_images', image_file.replace('.jpg', '.png'))
-                })
+    image_files = [f for f in os.listdir(coco_images_dir) if f.endswith('.jpg')]
+    total_images = len(image_files)
+    print(f"Processing {total_images} images...")
+    
+    for idx, image_file in enumerate(image_files, 1):
+        image_id = os.path.splitext(image_file)[0]
+        # Find the corresponding captions for this image
+        image_captions = [item['caption'] for item in captions_data['annotations'] if item['image_id'] == int(image_id)]
+        if image_captions:
+            # Use only the first caption for each image
+            random_caption = random.randint(1, 5)  # random number between 1 and 5 inclusive
+            metadata.append({
+                "text": image_captions[random_caption - 1],  # get the random caption
+                "image_file_name": os.path.join(coco_images_dir, image_file),
+                "conditioning_image_file_name": os.path.join('conditioning_images', image_file.replace('.jpg', '.png'))
+            })
+        
+        # Print progress every 1000 images
+        if idx % 1000 == 0 or idx == total_images:
+            print(f"  Processed {idx}/{total_images} images ({100*idx//total_images}%)")
 
     with open(output_file, 'w') as f:
         for item in metadata:
             f.write(json.dumps(item) + '\n')
+    
+    print(f"Metadata file created: {output_file}")
+    print(f"Total entries: {len(metadata)}")
 
 if __name__ == "__main__":
     coco_images_dir = 'datasets/coco/depth/images'  # replace with the path to your coco images directory
