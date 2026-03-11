@@ -25,9 +25,9 @@ accelerate launch train_controlnet.py \
  --pretrained_model_name_or_path=$MODEL_DIR \
  --output_dir=$OUTPUT_DIR \
  --train_data_dir=$DATASET_PATH \
- --image_column="file_name" \
+ --image_column="image" \
  --caption_column="text" \
- --conditioning_image_column="conditioning_file_name" \
+ --conditioning_image_column="conditioning_image" \
  --resolution=512 \
  --learning_rate=1e-5 \
  --validation_image "./conditioning_image_1.png" "./conditioning_image_2.png" \
