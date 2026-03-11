@@ -32,7 +32,7 @@ def create_metadata_file(coco_images_dir, captions_path, output_file):
             f.write(json.dumps(item) + '\n')
 
 if __name__ == "__main__":
-    coco_images_dir = 'dataset/coco/depth/images'  # replace with the path to your coco images directory
-    captions_path = 'dataset/coco/captions_train2017.json'  # replace with the path to your captions json file
-    output_file = 'dataset/coco/depth/metadata.jsonl'  # output metadata file
+    coco_images_dir = 'datasets/coco/depth/images'  # replace with the path to your coco images directory
+    captions_path = 'datasets/coco/captions_train2017.json'  # replace with the path to your captions json file
+    output_file = 'datasets/coco/depth/metadata.jsonl'  # output metadata file
     create_metadata_file(coco_images_dir, captions_path, output_file)
