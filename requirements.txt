@@ -8,3 +8,5 @@ xformers
 bitsandbytes
 matplotlib
 opencv-python
+imutils
+timm

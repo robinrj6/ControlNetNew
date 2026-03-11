@@ -30,6 +30,7 @@ accelerate launch train_controlnet.py \
  --conditioning_image_column="conditioning_image" \
  --resolution=512 \
  --lr_warmup_steps=1000 \
+ --lr_scheduler=cosine \
  --learning_rate=5e-6 \
  --validation_steps=500 \
  --num_validation_images=2 \
