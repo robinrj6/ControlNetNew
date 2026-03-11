@@ -7,8 +7,8 @@ with open('datasets/fill50k/metadata.jsonl', 'r') as f:
 if 'prompt' in metadata[0]:  # only rename if not already done
     for item in metadata:
         item['text'] = item.pop('prompt')
-        item['conditioning_file_name'] = item.pop('source')
-        item['file_name'] = item.pop('target')
+        item['conditioning_file_name'] = item.pop('conditioning_image')
+        item['file_name'] = item.pop('image')
 with open('datasets/fill50k/metadata.jsonl', 'w') as f:
     for item in metadata:
         f.write(json.dumps(item) + '\n')
