@@ -1,3 +1,5 @@
+#!/bin/bash
+#SBATCH --job-name=controlnet_train_fill50k
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
