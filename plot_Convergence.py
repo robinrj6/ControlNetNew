@@ -37,10 +37,11 @@ print(f"Filtered data points (loss < 1): {len(filtered_loss)}")
 
 # Plot the training loss
 plt.figure(figsize=(10, 6))
-plt.plot(filtered_steps, filtered_loss, linewidth=2)
+plt.plot(filtered_steps, filtered_loss, linewidth=2, marker='o', markersize=4)
 plt.title('Training Loss Convergence (loss < 1)', fontsize=14)
 plt.xlabel('Step', fontsize=12)
 plt.ylabel('Loss', fontsize=12)
+plt.gca().invert_yaxis()  # Invert y-axis: highest loss at top, 0 at bottom
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
 
