@@ -41,7 +41,7 @@ plt.plot(filtered_steps, filtered_loss, linewidth=2)
 plt.title('Training Loss Convergence (loss < 1)', fontsize=14)
 plt.xlabel('Step', fontsize=12)
 plt.ylabel('Loss', fontsize=12)
-plt.gca().invert_yaxis()  # Invert y-axis: highest loss at top, 0 at bottom
+# plt.gca().invert_yaxis()  # Invert y-axis: highest loss at top, 0 at bottom
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
 
