@@ -24,10 +24,21 @@ for line in lines:
         if steps_match:
             steps.append(int(steps_match.group(1)))
 
+# Filter to only loss < 1
+filtered_steps = []
+filtered_loss = []
+for step, loss in zip(steps, loss_values):
+    if loss < 1:
+        filtered_steps.append(step)
+        filtered_loss.append(loss)
+
+print(f"Original data points: {len(loss_values)}")
+print(f"Filtered data points (loss < 1): {len(filtered_loss)}")
+
 # Plot the training loss
 plt.figure(figsize=(10, 6))
-plt.plot(steps, loss_values, linewidth=2)
-plt.title('Training Loss Convergence', fontsize=14)
+plt.plot(filtered_steps, filtered_loss, linewidth=2)
+plt.title('Training Loss Convergence (loss < 1)', fontsize=14)
 plt.xlabel('Step', fontsize=12)
 plt.ylabel('Loss', fontsize=12)
 plt.grid(True, alpha=0.3)
