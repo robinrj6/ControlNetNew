@@ -10,17 +10,27 @@ def create_metadata_file(coco_images_dir, captions_path, output_file):
     # captions_path should point to a directory containing a json file with caption.json file which contains the captions for the coco dataset.
     with open(captions_path, 'r') as f:
         captions_data = json.load(f)
+    
+    # Build a lookup dictionary: image_id -> list of captions (O(n) instead of O(n*m))
+    print("Building caption lookup dictionary...")
+    captions_dict = {}
+    for item in captions_data['annotations']:
+        img_id = item['image_id']
+        if img_id not in captions_dict:
+            captions_dict[img_id] = []
+        captions_dict[img_id].append(item['caption'])
+    print(f"  Created lookup for {len(captions_dict)} unique images")
         
     metadata = []
     
-    image_files = [f for f in os.listdir(coco_images_dir) if f.endswith('.jpg')]
+    image_files = sorted([f for f in os.listdir(coco_images_dir) if f.endswith('.jpg')])
     total_images = len(image_files)
     print(f"Processing {total_images} images...")
     
     for idx, image_file in enumerate(image_files, 1):
-        image_id = os.path.splitext(image_file)[0]
-        # Find the corresponding captions for this image
-        image_captions = [item['caption'] for item in captions_data['annotations'] if item['image_id'] == int(image_id)]
+        image_id = int(os.path.splitext(image_file)[0])
+        # Fast lookup using dictionary
+        image_captions = captions_dict.get(image_id, [])
         if image_captions:
             # Use only the first caption for each image
             random_caption = random.randint(1, 5)  # random number between 1 and 5 inclusive
