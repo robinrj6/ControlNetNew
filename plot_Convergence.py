@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import re
 import os
 
-fileName = "controlnet_train_Fill50k_1548342"
+fileName = "controlnet_train_Fill50k_1548404"
 # Read the training loss values from the file
 with open(f'logs/{fileName}.err', 'r') as f:
     lines = f.readlines()
