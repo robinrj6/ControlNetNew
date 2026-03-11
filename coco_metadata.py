@@ -36,8 +36,8 @@ def create_metadata_file(coco_images_dir, captions_path, output_file):
             random_caption = random.randint(1, 5)  # random number between 1 and 5 inclusive
             metadata.append({
                 "text": image_captions[random_caption - 1],  # get the random caption
-                "image_file_name": os.path.join(coco_images_dir, image_file),
-                "conditioning_image_file_name": os.path.join('conditioning_images', image_file.replace('.jpg', '.png'))
+                "image_file_name": f"images/{image_file}",
+                "conditioning_image_file_name": f"conditioning_images/{image_file.replace('.jpg', '.png')}"
             })
         
         # Print progress every 1000 images
