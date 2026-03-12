@@ -3,8 +3,13 @@
 import matplotlib.pyplot as plt
 import re
 import os
+import pandas as pd
 
+# ===== CONFIG =====
 fileName = "controlnet_train_depth_1548585"
+plot_type = "both"  # Options: "raw", "smoothed", "both"
+smoothing_window = 50  # Window size for rolling average
+# ==================
 # Read the training loss values from the file
 with open(f'logs/{fileName}.err', 'r') as f:
     lines = f.readlines()
@@ -35,13 +40,26 @@ for step, loss in zip(steps, loss_values):
 print(f"Original data points: {len(loss_values)}")
 print(f"Filtered data points (loss < 1): {len(filtered_loss)}")
 
+# Apply rolling average smoothing (50-step window)
+loss_series = pd.Series(filtered_loss)
+smoothed_loss = loss_series.rolling(smoothing_window, center=True).mean()
+
 # Plot the training loss
-plt.figure(figsize=(10, 6))
-plt.plot(filtered_steps, filtered_loss, linewidth=2)
+plt.figure(figsize=(12, 6))
+
+if plot_type == "raw":
+    plt.plot(filtered_steps, filtered_loss, linewidth=2, color='blue', label='Raw loss')
+elif plot_type == "smoothed":
+    plt.plot(filtered_steps, smoothed_loss, linewidth=2, marker='o', markersize=3, color='blue', label=f'Smoothed loss ({smoothing_window}-step MA)')
+elif plot_type == "both":
+    plt.plot(filtered_steps, filtered_loss, linewidth=0.5, alpha=0.3, label='Raw loss', color='lightblue')
+    plt.plot(filtered_steps, smoothed_loss, linewidth=2, marker='o', markersize=3, label=f'Smoothed loss ({smoothing_window}-step MA)', color='blue')
+
 plt.title('Training Loss Convergence (loss < 1)', fontsize=14)
 plt.xlabel('Step', fontsize=12)
 plt.ylabel('Loss', fontsize=12)
-# plt.gca().invert_yaxis()  # Invert y-axis: highest loss at top, 0 at bottom
+plt.legend(fontsize=10)
+plt.gca().invert_yaxis()  # Invert y-axis: highest loss at top, 0 at bottom
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
 
