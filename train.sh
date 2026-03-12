@@ -35,8 +35,8 @@ accelerate launch train_controlnet.py \
  --learning_rate=5e-6 \
  --validation_steps=500 \
  --num_validation_images=2 \
- --validation_image "./conditioning_image_1.png" "./conditioning_image_2.png" \
- --validation_prompt "red circle with blue background" "cyan circle with brown floral background" \
+ --validation_image "./000000000285.png" "./000000001584.png" \
+ --validation_prompt "A close up picture of a brown bear's face." "A red double decker bus driving down a city street." \
  --train_batch_size=1 \
  --gradient_accumulation_steps=4 \
  --gradient_checkpointing \

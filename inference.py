@@ -25,12 +25,16 @@ prompt = "cyan circle with brown floral background"
 
 # Generate images for each checkpoint
 for checkpoint in checkpoints:
-    checkpoint_path = os.path.join(controlnet_path, checkpoint, "controlnet")
+    checkpoint_path = os.path.join(controlnet_path, checkpoint)
     print(f"Loading checkpoint: {checkpoint}")
     
     try:
-        # Load controlnet from checkpoint
-        controlnet = ControlNetModel.from_pretrained(checkpoint_path, torch_dtype=torch.float16)
+        # Load controlnet from checkpoint (config.json is in checkpoint-*/controlnet/)
+        controlnet = ControlNetModel.from_pretrained(
+            checkpoint_path, 
+            subfolder="controlnet",
+            torch_dtype=torch.float16
+        )
         pipe = StableDiffusionControlNetPipeline.from_pretrained(
             base_model_path, controlnet=controlnet, torch_dtype=torch.float16
         )
