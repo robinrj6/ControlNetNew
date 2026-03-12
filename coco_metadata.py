@@ -52,7 +52,7 @@ def create_metadata_file(coco_images_dir, captions_path, output_file):
     print(f"Total entries: {len(metadata)}")
 
 if __name__ == "__main__":
-    coco_images_dir = 'datasets/coco/depth/images'  # replace with the path to your coco images directory
-    captions_path = 'datasets/coco/captions_train2017.json'  # replace with the path to your captions json file
-    output_file = 'datasets/coco/depth/metadata.jsonl'  # output metadata file
+    coco_images_dir = 'datasets/coco/depth_val/images'  # replace with the path to your coco images directory
+    captions_path = 'datasets/coco/captions_val2017.json'  # replace with the path to your captions json file
+    output_file = 'datasets/coco/depth_val/metadata.jsonl'  # output metadata file
     create_metadata_file(coco_images_dir, captions_path, output_file)
