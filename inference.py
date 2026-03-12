@@ -25,7 +25,7 @@ prompt = "glowing pale blue circle with light yellow background"
 
 # Generate images for each checkpoint
 for checkpoint in checkpoints:
-    checkpoint_path = os.path.join(controlnet_path, checkpoint)
+    checkpoint_path = os.path.join(controlnet_path, checkpoint, "controlnet")
     print(f"Loading checkpoint: {checkpoint}")
     
     try:
