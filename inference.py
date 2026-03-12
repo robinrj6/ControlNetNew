@@ -34,10 +34,12 @@ for checkpoint in checkpoints:
             checkpoint_path, 
             subfolder="controlnet",
             torch_dtype=torch.float16,
-            require_safety_checker=False
+            safety_checker=None,
+            feature_extractor=None
+
         )
         pipe = StableDiffusionControlNetPipeline.from_pretrained(
-            base_model_path, controlnet=controlnet, torch_dtype=torch.float16, require_safety_checker=False
+            base_model_path, controlnet=controlnet, torch_dtype=torch.float16, safety_checker=None, feature_extractor=None
         )
         
         # speed up diffusion process with faster scheduler and memory optimization
