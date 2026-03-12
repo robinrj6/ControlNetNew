@@ -4,11 +4,20 @@ import matplotlib.pyplot as plt
 import re
 import os
 import pandas as pd
+import argparse
 
 # ===== CONFIG =====
-fileName = "controlnet_train_depth_1548585"
-plot_type = "both"  # Options: "raw", "smoothed", "both"
-smoothing_window = 50  # Window size for rolling average
+parser = argparse.ArgumentParser(description='Plot training loss convergence from log files')
+parser.add_argument('fileName', type=str, help='Log file name (without .err extension)')
+parser.add_argument('--plot-type', type=str, default='both', choices=['raw', 'smoothed', 'both'],
+                    help='Type of plot: raw, smoothed, or both (default: both)')
+parser.add_argument('--window', type=int, default=50, 
+                    help='Rolling average window size (default: 50)')
+args = parser.parse_args()
+
+fileName = args.fileName
+plot_type = args.plot_type
+smoothing_window = args.window
 # ==================
 # Read the training loss values from the file
 with open(f'logs/{fileName}.err', 'r') as f:
@@ -67,6 +76,6 @@ plt.tight_layout()
 os.makedirs('results', exist_ok=True)
 
 # Save the figure
-plt.savefig('results/training_loss_convergence.png', dpi=300, bbox_inches='tight')
-print("Plot saved to results/training_loss_convergence.png")
+plt.savefig(f'results/{fileName}.png', dpi=300, bbox_inches='tight')
+print(f"Plot saved to results/{fileName}.png")
 plt.show()
