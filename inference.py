@@ -20,7 +20,7 @@ print(f"Found {len(checkpoints)} checkpoints: {checkpoints}\n")
 # Create output directory for results
 os.makedirs("inference_outputs", exist_ok=True)
 
-control_image = load_image("./conditioning_image_1.png").convert("RGB").resize((512, 512))
+control_image = load_image("./conditioning_image_2.png").resize((512, 512))
 prompt = "cyan circle with brown floral background"
 
 # Generate images for each checkpoint
