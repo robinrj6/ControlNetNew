@@ -173,7 +173,10 @@ def log_validation(
                 validation_prompt = log["validation_prompt"]
                 validation_image = log["validation_image"]
 
-                formatted_images = [np.asarray(validation_image)]
+                # Resize conditioning image to match generated image size
+                validation_image_resized = validation_image.resize((images[0].width, images[0].height))
+                
+                formatted_images = [np.asarray(validation_image_resized)]
 
                 for image in images:
                     formatted_images.append(np.asarray(image))
