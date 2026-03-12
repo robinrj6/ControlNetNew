@@ -20,7 +20,7 @@ print(f"Found {len(checkpoints)} checkpoints: {checkpoints}\n")
 # Create output directory for results
 os.makedirs("inference_outputs", exist_ok=True)
 
-control_image = load_image("./conditioning_image_2.png").resize((512, 512))
+control_image = load_image("./conditioning_image_2.png")
 prompt = "cyan circle with brown floral background"
 
 # Generate images for each checkpoint
@@ -43,7 +43,7 @@ for checkpoint in checkpoints:
         # generate image
         generator = torch.manual_seed(0)
         image = pipe(
-            prompt, num_inference_steps=30, generator=generator, image=control_image
+            prompt, num_inference_steps=50, generator=generator, image=control_image
         ).images[0]
         
         # Save with checkpoint name
