@@ -9,7 +9,7 @@
 #SBATCH --error=logs/controlnet_train_depth_%j.err
 
 export MODEL_DIR="models/sd15/"
-export OUTPUT_DIR="output/depth_coco_controlnet"
+export OUTPUT_DIR="output/depth_coco_controlnet_1e-5"
 export DATASET_PATH="datasets/coco/depth/"
 
 export HF_HOME="/home/woody/rlvl/rlvl165v/.cache/huggingface"
@@ -30,9 +30,10 @@ accelerate launch train_controlnet.py \
  --conditioning_image_column="conditioning_image" \
  --resolution=512 \
  --mixed_precision="fp16" \
- --lr_warmup_steps=1000 \
+ --dataloader_num_workers=2 \
+ --lr_warmup_steps=300 \
  --lr_scheduler=cosine \
- --learning_rate=5e-6 \
+ --learning_rate=1e-5 \
  --validation_steps=500 \
  --num_validation_images=2 \
  --validation_image "./000000000285.png" "./000000001584.png" \
