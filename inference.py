@@ -21,7 +21,7 @@ print(f"Found {len(checkpoints)} checkpoints: {checkpoints}\n")
 os.makedirs("inference_outputs", exist_ok=True)
 
 control_image = load_image("./conditioning_image_2.png")
-prompt = "cyan circle with brown floral background"
+prompt = "cyan glowing circle with brown background"
 
 # Generate images for each checkpoint
 for checkpoint in checkpoints:
