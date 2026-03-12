@@ -33,18 +33,18 @@ for checkpoint in checkpoints:
         controlnet = ControlNetModel.from_pretrained(
             checkpoint_path, 
             subfolder="controlnet",
-            torch_dtype=torch.float16
+            torch_dtype=torch.float16,
+            require_safety_checker=False
         )
         pipe = StableDiffusionControlNetPipeline.from_pretrained(
-            base_model_path, controlnet=controlnet, torch_dtype=torch.float16
+            base_model_path, controlnet=controlnet, torch_dtype=torch.float16, require_safety_checker=False
         )
-        pipe.safety_checker = lambda images, clip_input: (images, False)
         
         # speed up diffusion process with faster scheduler and memory optimization
         pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
         pipe.enable_xformers_memory_efficient_attention()
         pipe.enable_model_cpu_offload()
-        
+
         # generate image
         generator = torch.manual_seed(0)
         image = pipe(
