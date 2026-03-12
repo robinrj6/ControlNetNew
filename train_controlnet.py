@@ -145,6 +145,26 @@ def log_validation(
             {"validation_image": validation_image, "images": images, "validation_prompt": validation_prompt}
         )
 
+    # Save validation images to disk
+    validation_output_dir = os.path.join(args.output_dir, "validation_images")
+    os.makedirs(validation_output_dir, exist_ok=True)
+    
+    for idx, log in enumerate(image_logs):
+        images = log["images"]
+        validation_prompt = log["validation_prompt"]
+        validation_image = log["validation_image"]
+        
+        # Save conditioning image
+        conditioning_path = os.path.join(validation_output_dir, f"step_{step:06d}_prompt_{idx}_conditioning.png")
+        validation_image.save(conditioning_path)
+        
+        # Save generated images
+        for img_idx, image in enumerate(images):
+            image_path = os.path.join(validation_output_dir, f"step_{step:06d}_prompt_{idx}_generated_{img_idx}.png")
+            image.save(image_path)
+    
+    logger.info(f"Saved validation images to {validation_output_dir}")
+
     tracker_key = "test" if is_final_validation else "validation"
     for tracker in accelerator.trackers:
         if tracker.name == "tensorboard":
