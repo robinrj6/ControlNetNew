@@ -9,8 +9,8 @@
 #SBATCH --error=logs/controlnet_train_Fill50k_%j.err
 
 export MODEL_DIR="models/sd15/"
-export OUTPUT_DIR="output/fill50k_controlnet"
-export DATASET_PATH="datasets/fill50k/"
+export OUTPUT_DIR="output/depth_coco_controlnet"
+export DATASET_PATH="datasets/coco/depth/"
 
 export HF_HOME="/home/woody/rlvl/rlvl165v/.cache/huggingface"
 export HF_DATASETS_CACHE="$HF_HOME/datasets"
@@ -29,6 +29,7 @@ accelerate launch train_controlnet.py \
  --caption_column="text" \
  --conditioning_image_column="conditioning_image" \
  --resolution=512 \
+ --mixed_precision="fp16" \
  --lr_warmup_steps=1000 \
  --lr_scheduler=cosine \
  --learning_rate=5e-6 \

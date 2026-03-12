@@ -21,7 +21,7 @@ print(f"Found {len(checkpoints)} checkpoints: {checkpoints}\n")
 os.makedirs("inference_outputs", exist_ok=True)
 
 control_image = load_image("./conditioning_image_2.png")
-prompt = "cyan glowing circle with brown background"
+prompt = "cyan circle with brown floral background"
 
 # Generate images for each checkpoint
 for checkpoint in checkpoints:
@@ -34,6 +34,7 @@ for checkpoint in checkpoints:
         pipe = StableDiffusionControlNetPipeline.from_pretrained(
             base_model_path, controlnet=controlnet, torch_dtype=torch.float16
         )
+        pipe.safety_checker = lambda images, clip_input: (images, False)
         
         # speed up diffusion process with faster scheduler and memory optimization
         pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
