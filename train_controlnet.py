@@ -660,6 +660,8 @@ def make_train_dataset(args, tokenizer, accelerator):
             raise ValueError(
                 f"`--image_column` value '{args.image_column}' not found in dataset columns. Dataset columns are: {', '.join(column_names)}"
             )
+        else:
+            logger.info(f"image column set to {image_column}")
 
     if args.caption_column is None:
         caption_column = column_names[1]
@@ -670,6 +672,8 @@ def make_train_dataset(args, tokenizer, accelerator):
             raise ValueError(
                 f"`--caption_column` value '{args.caption_column}' not found in dataset columns. Dataset columns are: {', '.join(column_names)}"
             )
+        else:
+            logger.info(f"caption column set to {caption_column}")
 
     if args.conditioning_image_column is None:
         conditioning_image_column = column_names[2]
@@ -680,6 +684,8 @@ def make_train_dataset(args, tokenizer, accelerator):
             raise ValueError(
                 f"`--conditioning_image_column` value '{args.conditioning_image_column}' not found in dataset columns. Dataset columns are: {', '.join(column_names)}"
             )
+        else:
+            logger.info(f"conditioning image column set to {conditioning_image_column}")    
 
     def tokenize_captions(examples, is_train=True):
         captions = []

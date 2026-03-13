@@ -32,10 +32,9 @@ def create_metadata_file(coco_images_dir, captions_path, output_file):
         # Fast lookup using dictionary
         image_captions = captions_dict.get(image_id, [])
         if image_captions:
-            # Use only the first caption for each image
-            random_caption = random.randint(1, 5)  # random number between 1 and 5 inclusive
+            # Include all captions for each image
             metadata.append({
-                "text": image_captions[random_caption - 1],  # get the random caption
+                "text": image_captions,  # all captions for this image
                 "image_file_name": f"images/{image_file}",
                 "conditioning_image_file_name": f"conditioning_images/{image_file.replace('.jpg', '.png')}"
             })
