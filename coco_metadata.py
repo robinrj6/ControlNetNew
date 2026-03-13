@@ -33,6 +33,8 @@ def create_metadata_file(coco_images_dir, captions_path, output_file):
         image_captions = captions_dict.get(image_id, [])
         if image_captions:
             # Include all captions for each image
+            # If you want to include only one caption per image, you can randomly select one from the list:
+            image_captions = random.choice(image_captions)    
             metadata.append({
                 "text": image_captions,  # all captions for this image
                 "image_file_name": f"images/{image_file}",
