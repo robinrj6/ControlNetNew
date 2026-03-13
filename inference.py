@@ -18,12 +18,12 @@ if not checkpoints:
 print(f"Found {len(checkpoints)} checkpoints: {checkpoints}\n")
 
 # Create output directory for results
-os.makedirs("inference_outputs", exist_ok=True)
+os.makedirs("inference_outputs/5e-5", exist_ok=True)
 
-control_image = load_image("./000000001761.png").convert("RGB").resize((512, 512))
+control_image = load_image("./000000004495.png").convert("RGB").resize((512, 512))
 # save the control image for reference
 control_image.save("inference_outputs/5e-5/control_image.png")
-prompt = "A sky photo of 2 airplanes flying over a bridge."
+prompt = "A television, couch and chair in the corner of a room."
 
 # Generate images for each checkpoint
 for checkpoint in checkpoints:
