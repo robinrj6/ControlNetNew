@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 base_model_path = "models/sd15/"
-controlnet_path = "output/fill50k_controlnet/"
+controlnet_path = "output/depth_coco_controlnet_1e-5/"
 
 # Find all checkpoint directories
 checkpoints = sorted([d for d in os.listdir(controlnet_path) if d.startswith('checkpoint-')])
@@ -20,8 +20,8 @@ print(f"Found {len(checkpoints)} checkpoints: {checkpoints}\n")
 # Create output directory for results
 os.makedirs("inference_outputs", exist_ok=True)
 
-control_image = load_image("./conditioning_image_2.png")
-prompt = "cyan circle with brown floral background"
+control_image = load_image("./000000000285.png")
+prompt = "A close up picture of a brown bear's face."
 
 # Generate images for each checkpoint
 for checkpoint in checkpoints:
