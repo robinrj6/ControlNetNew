@@ -61,9 +61,12 @@ for checkpoint in checkpoints:
         print(f"  ✓ Saved to {output_path}\n")
         
         # Clean up to free memory
+        pipe.to("cpu")
         del pipe
         del controlnet
         torch.cuda.empty_cache()
+        import gc
+        gc.collect()
         
     except Exception as e:
         print(f"  ✗ Error loading {checkpoint}: {e}\n")
