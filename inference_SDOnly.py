@@ -8,7 +8,7 @@ base_model_path = "models/sd15/"
 # Create output directory for results
 os.makedirs("inference_outputs/sd_only", exist_ok=True)
 
-prompt = "A man holding a baby whose petting a horse."
+prompt = "A man with a plaid hat, tie, dress shirt and glasses on."
 
 print(f"Generating image with prompt: {prompt}\n")
 

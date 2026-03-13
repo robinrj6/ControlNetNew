@@ -20,10 +20,10 @@ print(f"Found {len(checkpoints)} checkpoints: {checkpoints}\n")
 # Create output directory for results
 os.makedirs("inference_outputs/canny_model", exist_ok=True)
 
-control_image = load_image("./test/000000012748.png").convert("RGB").resize((512, 512))
+control_image = load_image("./test/000000008532.png").convert("RGB").resize((512, 512))
 # save the control image for reference
 control_image.save("inference_outputs/canny_model/control_image.png")
-prompt = "A man holding a baby whose petting a horse."
+prompt = "A man with a plaid hat, tie, dress shirt and glasses on."
 
 # Generate images for each checkpoint
 for checkpoint in checkpoints:
