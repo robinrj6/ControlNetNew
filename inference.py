@@ -21,6 +21,8 @@ print(f"Found {len(checkpoints)} checkpoints: {checkpoints}\n")
 os.makedirs("inference_outputs", exist_ok=True)
 
 control_image = load_image("./000000001761.png").convert("RGB").resize((512, 512))
+# save the control image for reference
+control_image.save("inference_outputs/control_image.png")
 prompt = "A sky photo of 2 airplanes flying over a bridge."
 
 # Generate images for each checkpoint
