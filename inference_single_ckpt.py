@@ -67,7 +67,7 @@ def main(args):
         for idx, data in enumerate(metadata_list):
             try:
                 prompt = data['text'][0] if isinstance(data['text'], list) else data['text']
-                control_image_path = os.path.join(args.control_images_dir, data['conditioning_image_file_name'].split('/')[-1])
+                control_image_path = os.path.join(control_images_dir, data['conditioning_image_file_name'].split('/')[-1])
                 image_filename = Path(data['image_file_name']).stem
                 
                 if not os.path.exists(control_image_path):
