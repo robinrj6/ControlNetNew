@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 base_model_path = "models/sd15/"
-controlnet_path = "output/depth_coco_controlnet_1e-5/"
+controlnet_path = "output/depth_coco_controlnet/"
 
 # Find all checkpoint directories
 checkpoints = sorted([d for d in os.listdir(controlnet_path) if d.startswith('checkpoint-')])
