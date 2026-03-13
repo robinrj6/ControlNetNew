@@ -35,7 +35,7 @@ print("Generating images...\n")
 # Generate images for each prompt
 for idx, data in enumerate(prompts):
     try:
-        prompt = data['text'][0]  # use the first caption
+        prompt = data['text'] if isinstance(data['text'], str) else data['text'][0]  # handle both string and list
         image_filename = Path(data['image_file_name']).stem  # get filename without extension
         
         print(f"[{idx+1}/{len(prompts)}] Generating: {prompt}")
