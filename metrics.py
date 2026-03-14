@@ -23,8 +23,10 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
 import torch
+import torch.nn.functional as F
 from PIL import Image
 from pytorch_fid.fid_score import calculate_fid_given_paths
+from skimage.metrics import structural_similarity as ssim
 from transformers import CLIPModel, CLIPProcessor
 
 
@@ -388,7 +390,69 @@ def main() -> None:
     	device,
 	)
 	log(f"✓ SD1.5 Aesthetic: {aes_sd15:.4f} [processed={aes_sd_count}]")
+
+	# 4) Conditioning fidelity (optional - requires conditioning images)
+	log("="*60)
+	log("STAGE 4/4: Computing conditioning fidelity...")
+	log("="*60)
+	log("Computing conditioning fidelity for ControlNet...")
+	cond_fidelity_cn, cond_pairs_cn = conditioning_fidelity(
+		CANNY_IMAGES_DIR,
+		CONTROLNET_IMAGES_DIR,
+		device,
+	)
+	log(f"✓ ControlNet Conditioning Fidelity: {cond_fidelity_cn:.4f} [pairs={cond_pairs_cn}]")
     
+
+@torch.inference_mode()
+def conditioning_fidelity(
+    conditioning_dir: Path,
+    generated_dir: Path,
+    device: torch.device,
+) -> Tuple[float, int]:
+	"""
+	Compute conditioning fidelity using SSIM between conditioning and generated images.
+	Measures how well the generated images preserve the structure of conditioning images.
+	Returns (mean_fidelity, num_pairs).
+	"""
+	conditioning_images = list_images(conditioning_dir)
+	log(f"  Found {len(conditioning_images)} conditioning images in {conditioning_dir}")
+	
+	fidelity_scores = []
+	matched_pairs = 0
+	
+	for cond_path in conditioning_images:
+		# Try to find corresponding generated image
+		gen_path = (Path(generated_dir) / cond_path.name)
+		
+		if not gen_path.exists():
+			continue
+		
+		try:
+			# Load images
+			cond_img = Image.open(cond_path).convert("RGB")
+			gen_img = Image.open(gen_path).convert("RGB")
+			
+			# Ensure same size
+			if cond_img.size != gen_img.size:
+				gen_img = gen_img.resize(cond_img.size, Image.LANCZOS)
+			
+			# Convert to numpy for SSIM
+			import numpy as np
+			cond_array = np.array(cond_img).astype(np.float32) / 255.0
+			gen_array = np.array(gen_img).astype(np.float32) / 255.0
+			
+			# Compute SSIM (higher is better, range 0-1)
+			score = ssim(cond_array, gen_array, channel_axis=2, data_range=1.0)
+			fidelity_scores.append(score)
+			matched_pairs += 1
+			
+		except Exception as e:
+			log(f"    Warning: Could not process {cond_path.name}: {e}")
+			continue
+	
+	mean_fidelity = sum(fidelity_scores) / len(fidelity_scores) if fidelity_scores else 0.0
+	return float(mean_fidelity), int(matched_pairs)
 
 	log("\n" + "="*60)
 	log("FINAL RESULTS")
@@ -399,6 +463,7 @@ def main() -> None:
 	log(f"CLIP  (SD1.5)            : {clip_sd15:.4f}  [used={used_sd}, skipped={skipped_sd}]")
 	log(f"CLIP Aesthetic (ControlNet): {aes_controlnet:.4f}")
 	log(f"CLIP Aesthetic (SD1.5)    : {aes_sd15:.4f}")
+	log(f"Conditioning Fidelity (ControlNet): {cond_fidelity_cn:.4f}  [pairs={cond_pairs_cn}]")
 	log("="*60)
 	log("✓ All metrics computation complete!")
 
