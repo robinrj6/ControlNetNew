@@ -22,6 +22,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
+# Set HuggingFace cache BEFORE importing transformers
+HF_CACHE_DIR = Path.cwd() / "models" / "huggingface_cache"
+if HF_CACHE_DIR.exists():
+	os.environ["HF_HOME"] = str(HF_CACHE_DIR)
+
 import torch
 import torch.nn.functional as F
 from PIL import Image
@@ -447,11 +452,11 @@ def main() -> None:
 	log("="*60)
 	log("Loading CLIP model...")
 	log(f"  Loading CLIPProcessor from: {CLIP_MODEL_ID}")
-	processor = CLIPProcessor.from_pretrained(CLIP_MODEL_ID)
+	processor = CLIPProcessor.from_pretrained(CLIP_MODEL_ID, local_files_only=True)
 	log(f"  ✓ CLIPProcessor loaded")
 	
 	log(f"  Loading CLIPModel from: {CLIP_MODEL_ID}")
-	model = CLIPModel.from_pretrained(CLIP_MODEL_ID).to(device).eval()
+	model = CLIPModel.from_pretrained(CLIP_MODEL_ID, local_files_only=True).to(device).eval()
 	log(f"  ✓ CLIPModel loaded and moved to {device}")
 	log("✓ CLIP model fully loaded")
 
