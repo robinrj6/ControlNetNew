@@ -41,9 +41,9 @@ def log(msg: str) -> None:
 # CONFIG: EDIT THESE PATHS
 # =========================
 REAL_IMAGES_DIR = Path("datasets/coco/depth_val/images/")
-CANNY_IMAGES_DIR = Path("datasets/coco/depth_val/edges/")
-CONTROLNET_IMAGES_DIR = Path("datasets/coco/depth_val/generated_images_ControlNet/")
-SD15_IMAGES_DIR = Path("datasets/coco/depth_val/generated_images_SD15/")
+CANNY_IMAGES_DIR = Path("datasets/coco/depth_val/conditioning_images/")
+CONTROLNET_IMAGES_DIR = Path("inference_outputs/checkpoint-29000/")
+SD15_IMAGES_DIR = Path("inference_outputs/sd_only/")
 METADATA_JSONL_PATH = Path("datasets/coco/depth_val/metadata.jsonl")
 
 # Optional settings
