@@ -104,20 +104,70 @@ def load_metadata_prompts(metadata_jsonl: Path) -> Dict[str, str]:
 	return stem_to_prompt
 
 
+def _resize_images_in_dir(image_dir: Path, target_size: int = 299) -> Path:
+	"""
+	Create a temporary directory with resized images for FID computation.
+	Inception V3 expects 299x299 input, but we resize with aspect ratio preservation.
+	"""
+	import tempfile
+	import shutil
+	
+	temp_dir = Path(tempfile.mkdtemp(prefix="fid_resized_"))
+	images = list_images(image_dir)
+	
+	log(f"  Resizing {len(images)} images to {target_size}x{target_size}...")
+	for i, img_path in enumerate(images):
+		try:
+			img = Image.open(img_path).convert("RGB")
+			# Resize with aspect ratio preservation, then pad/crop to target size
+			img.thumbnail((target_size, target_size), Image.LANCZOS)
+			# Create square canvas and paste image (center it)
+			canvas = Image.new("RGB", (target_size, target_size), (0, 0, 0))
+			offset = ((target_size - img.width) // 2, (target_size - img.height) // 2)
+			canvas.paste(img, offset)
+			
+			output_path = temp_dir / img_path.name
+			canvas.save(output_path, "JPEG", quality=95)
+		except Exception as e:
+			log(f"    Warning: Failed to resize {img_path.name}: {e}")
+			continue
+		
+		if (i + 1) % 50 == 0:
+			log(f"    Resized {i + 1}/{len(images)} images")
+	
+	return temp_dir
+
+
 def fid_score(real_dir: Path, generated_dir: Path, device: torch.device) -> float:
-	# pytorch-fid expects folder paths and computes FID over all images in each folder.
+	"""
+	Compute FID while handling variable-sized images by resizing them first.
+	"""
+	import tempfile
+	import shutil
+	
 	log(f"Starting FID calculation: {real_dir} vs {generated_dir}")
-	fid_value = float(
-		calculate_fid_given_paths(
-			[str(real_dir), str(generated_dir)],
-			batch_size=FID_BATCH_SIZE,
-			device=device,
-			dims=FID_DIMS,
-			num_workers=FID_NUM_WORKERS,
+	
+	# Resize images to consistent size
+	real_resized = _resize_images_in_dir(real_dir, target_size=299)
+	gen_resized = _resize_images_in_dir(generated_dir, target_size=299)
+	
+	try:
+		log("Computing FID on resized images...")
+		fid_value = float(
+			calculate_fid_given_paths(
+				[str(real_resized), str(gen_resized)],
+				batch_size=FID_BATCH_SIZE,
+				device=device,
+				dims=FID_DIMS,
+				num_workers=FID_NUM_WORKERS,
+			)
 		)
-	)
-	log(f"FID calculation complete: {fid_value:.4f}")
-	return fid_value
+		log(f"FID calculation complete: {fid_value:.4f}")
+		return fid_value
+	finally:
+		# Clean up temporary directories
+		shutil.rmtree(real_resized, ignore_errors=True)
+		shutil.rmtree(gen_resized, ignore_errors=True)
 
 
 def _batched(items, batch_size: int):
