@@ -51,7 +51,7 @@ REPORT_FILE = Path("results/metrics_report.txt")
 CLIP_MODEL_ID = "openai/clip-vit-base-patch32"
 FID_BATCH_SIZE = 32
 FID_DIMS = 2048
-FID_NUM_WORKERS = 4
+FID_NUM_WORKERS = 0  # Set to 0 to avoid DataLoader issues with variable image sizes
 CLIP_BATCH_SIZE = 16
 
 # Set this to a directory containing pre-downloaded Inception weights if needed

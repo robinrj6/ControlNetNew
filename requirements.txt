@@ -10,3 +10,5 @@ matplotlib
 opencv-python
 imutils
 timm
+pytorch-fid
+scikit-image
