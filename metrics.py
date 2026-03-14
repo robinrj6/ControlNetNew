@@ -59,6 +59,9 @@ CLIP_BATCH_SIZE = 16
 TORCH_HOME_OVERRIDE = (Path.cwd() / "models" / "torch_cache").resolve()
 FID_WEIGHTS_FILENAME = "pt_inception-2015-12-05-6726825d.pth"
 
+# HuggingFace cache for CLIP model
+HUGGINGFACE_CACHE = (Path.cwd() / "models" / "huggingface_cache").resolve()
+
 
 VALID_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
@@ -379,6 +382,11 @@ def main() -> None:
 	log("Initializing metrics computation...")
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 	log(f"Device: {device}")
+	
+	# Set HuggingFace cache
+	if HUGGINGFACE_CACHE.exists():
+		os.environ["HF_HOME"] = str(HUGGINGFACE_CACHE)
+		log(f"Using HF_HOME: {HUGGINGFACE_CACHE}")
 	
 	# Override torch hub cache location if specified
 	if TORCH_HOME_OVERRIDE is not None:
