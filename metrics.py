@@ -45,6 +45,7 @@ CANNY_IMAGES_DIR = Path("datasets/coco/depth_val/conditioning_images/")
 CONTROLNET_IMAGES_DIR = Path("inference_outputs/checkpoint-29000/")
 SD15_IMAGES_DIR = Path("inference_outputs/sd_only/")
 METADATA_JSONL_PATH = Path("datasets/coco/depth_val/metadata.jsonl")
+REPORT_FILE = Path("results/metrics_report.txt")
 
 # Optional settings
 CLIP_MODEL_ID = "openai/clip-vit-base-patch32"
@@ -119,7 +120,7 @@ def fid_score(real_dir: Path, generated_dir: Path, device: torch.device) -> floa
 	return fid_value
 
 
-def _batched(items: List[Tuple[Path, str]], batch_size: int) -> Iterable[List[Tuple[Path, str]]]:
+def _batched(items, batch_size: int):
 	for i in range(0, len(items), batch_size):
 		yield items[i : i + batch_size]
 
@@ -273,6 +274,57 @@ def clip_aesthetic_score(
     mean_aesthetic = total_score / max(count, 1)
     return float(mean_aesthetic), int(count)
 
+
+@torch.inference_mode()
+def conditioning_fidelity(
+    conditioning_dir: Path,
+    generated_dir: Path,
+    device: torch.device,
+) -> Tuple[float, int]:
+	"""
+	Compute conditioning fidelity using SSIM between conditioning and generated images.
+	Measures how well the generated images preserve the structure of conditioning images.
+	Returns (mean_fidelity, num_pairs).
+	"""
+	conditioning_images = list_images(conditioning_dir)
+	log(f"  Found {len(conditioning_images)} conditioning images in {conditioning_dir}")
+	
+	fidelity_scores = []
+	matched_pairs = 0
+	
+	for cond_path in conditioning_images:
+		# Try to find corresponding generated image
+		gen_path = (Path(generated_dir) / cond_path.name)
+		
+		if not gen_path.exists():
+			continue
+		
+		try:
+			# Load images
+			cond_img = Image.open(cond_path).convert("RGB")
+			gen_img = Image.open(gen_path).convert("RGB")
+			
+			# Ensure same size
+			if cond_img.size != gen_img.size:
+				gen_img = gen_img.resize(cond_img.size, Image.LANCZOS)
+			
+			# Convert to numpy for SSIM
+			import numpy as np
+			cond_array = np.array(cond_img).astype(np.float32) / 255.0
+			gen_array = np.array(gen_img).astype(np.float32) / 255.0
+			
+			# Compute SSIM (higher is better, range 0-1)
+			score = ssim(cond_array, gen_array, channel_axis=2, data_range=1.0)
+			fidelity_scores.append(score)
+			matched_pairs += 1
+			
+		except Exception as e:
+			log(f"    Warning: Could not process {cond_path.name}: {e}")
+			continue
+	
+	mean_fidelity = sum(fidelity_scores) / len(fidelity_scores) if fidelity_scores else 0.0
+	return float(mean_fidelity), int(matched_pairs)
+
 def main() -> None:
 	log("Initializing metrics computation...")
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -402,70 +454,41 @@ def main() -> None:
 		device,
 	)
 	log(f"✓ ControlNet Conditioning Fidelity: {cond_fidelity_cn:.4f} [pairs={cond_pairs_cn}]")
-    
-
-@torch.inference_mode()
-def conditioning_fidelity(
-    conditioning_dir: Path,
-    generated_dir: Path,
-    device: torch.device,
-) -> Tuple[float, int]:
-	"""
-	Compute conditioning fidelity using SSIM between conditioning and generated images.
-	Measures how well the generated images preserve the structure of conditioning images.
-	Returns (mean_fidelity, num_pairs).
-	"""
-	conditioning_images = list_images(conditioning_dir)
-	log(f"  Found {len(conditioning_images)} conditioning images in {conditioning_dir}")
 	
-	fidelity_scores = []
-	matched_pairs = 0
-	
-	for cond_path in conditioning_images:
-		# Try to find corresponding generated image
-		gen_path = (Path(generated_dir) / cond_path.name)
-		
-		if not gen_path.exists():
-			continue
-		
-		try:
-			# Load images
-			cond_img = Image.open(cond_path).convert("RGB")
-			gen_img = Image.open(gen_path).convert("RGB")
-			
-			# Ensure same size
-			if cond_img.size != gen_img.size:
-				gen_img = gen_img.resize(cond_img.size, Image.LANCZOS)
-			
-			# Convert to numpy for SSIM
-			import numpy as np
-			cond_array = np.array(cond_img).astype(np.float32) / 255.0
-			gen_array = np.array(gen_img).astype(np.float32) / 255.0
-			
-			# Compute SSIM (higher is better, range 0-1)
-			score = ssim(cond_array, gen_array, channel_axis=2, data_range=1.0)
-			fidelity_scores.append(score)
-			matched_pairs += 1
-			
-		except Exception as e:
-			log(f"    Warning: Could not process {cond_path.name}: {e}")
-			continue
-	
-	mean_fidelity = sum(fidelity_scores) / len(fidelity_scores) if fidelity_scores else 0.0
-	return float(mean_fidelity), int(matched_pairs)
-
-	log("\n" + "="*60)
+	# Generate report
+	log("="*60)
 	log("FINAL RESULTS")
 	log("="*60)
-	log(f"FID   (Real vs ControlNet): {fid_controlnet:.4f}")
-	log(f"FID   (Real vs SD1.5)    : {fid_sd15:.4f}")
-	log(f"CLIP  (ControlNet)       : {clip_controlnet:.4f}  [used={used_cn}, skipped={skipped_cn}]")
-	log(f"CLIP  (SD1.5)            : {clip_sd15:.4f}  [used={used_sd}, skipped={skipped_sd}]")
-	log(f"CLIP Aesthetic (ControlNet): {aes_controlnet:.4f}")
-	log(f"CLIP Aesthetic (SD1.5)    : {aes_sd15:.4f}")
-	log(f"Conditioning Fidelity (ControlNet): {cond_fidelity_cn:.4f}  [pairs={cond_pairs_cn}]")
-	log("="*60)
-	log("✓ All metrics computation complete!")
+	report_lines = []
+	report_lines.append("="*60)
+	report_lines.append("METRICS REPORT")
+	report_lines.append("="*60)
+	report_lines.append(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+	report_lines.append("")
+	report_lines.append("Dataset Summary:")
+	report_lines.append(f"  Real images      : {n_real}")
+	report_lines.append(f"  Canny images     : {n_canny}")
+	report_lines.append(f"  ControlNet images: {n_controlnet}")
+	report_lines.append(f"  SD1.5 images     : {n_sd15}")
+	report_lines.append("")
+	report_lines.append("Results:")
+	report_lines.append(f"  FID (Real vs ControlNet): {fid_controlnet:.4f}")
+	report_lines.append(f"  FID (Real vs SD1.5)    : {fid_sd15:.4f}")
+	report_lines.append(f"  CLIP (ControlNet)      : {clip_controlnet:.4f}  [used={used_cn}, skipped={skipped_cn}]")
+	report_lines.append(f"  CLIP (SD1.5)           : {clip_sd15:.4f}  [used={used_sd}, skipped={skipped_sd}]")
+	report_lines.append(f"  Aesthetic (ControlNet) : {aes_controlnet:.4f}")
+	report_lines.append(f"  Aesthetic (SD1.5)      : {aes_sd15:.4f}")
+	report_lines.append(f"  Conditioning Fidelity  : {cond_fidelity_cn:.4f}  [pairs={cond_pairs_cn}]")
+	report_lines.append("="*60)
+	
+	# Print to console
+	for line in report_lines:
+		log(line)
+	
+	# Save to file
+	with REPORT_FILE.open("w", encoding="utf-8") as f:
+		f.write("\n".join(report_lines))
+	log(f"✓ Report saved to {REPORT_FILE}")
 
 if __name__ == "__main__":
 	main()
