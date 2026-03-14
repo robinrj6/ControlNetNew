@@ -53,7 +53,7 @@ METADATA_JSONL_PATH = Path("datasets/coco/depth_val/metadata.jsonl")
 REPORT_FILE = Path("results/metrics_report.txt")
 
 # Optional settings
-CLIP_MODEL_ID = "models/huggingface_cache/hub/models--openai--clip-vit-base-patch32/"
+CLIP_MODEL_ID = "models/huggingface_cache/hub/models--openai--clip-vit-base-patch32/snapshots/3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268/"
 FID_BATCH_SIZE = 32
 FID_DIMS = 2048
 FID_NUM_WORKERS = 0  # Set to 0 to avoid DataLoader issues with variable image sizes
