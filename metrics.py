@@ -318,6 +318,13 @@ def clip_aesthetic_score(
             pos_image_features = pos_image_features.pooled_output
         if not isinstance(pos_text_features, torch.Tensor) and hasattr(pos_text_features, 'pooled_output'):
             pos_text_features = pos_text_features.pooled_output
+        
+        # Normalize
+        pos_image_features = pos_image_features / pos_image_features.norm(dim=-1, keepdim=True)
+        pos_text_features = pos_text_features / pos_text_features.norm(dim=-1, keepdim=True)
+        
+        # Average text features across prompts
+        pos_text_features = pos_text_features.mean(dim=0, keepdim=True)
         neg_inputs = processor(
             text=negative_prompts, 
             images=pil_images, 
@@ -347,6 +354,9 @@ def clip_aesthetic_score(
         # Normalize
         neg_image_features = neg_image_features / neg_image_features.norm(dim=-1, keepdim=True)
         neg_text_features = neg_text_features / neg_text_features.norm(dim=-1, keepdim=True)
+        
+        # Average text features across prompts
+        neg_text_features = neg_text_features.mean(dim=0, keepdim=True)
         
         # Aesthetic score = positive alignment - negative alignment
         pos_scores = (pos_image_features * pos_text_features).mean(dim=1)
@@ -478,42 +488,42 @@ def main() -> None:
 	# log(f"✓ SD1.5 FID: {fid_sd15:.4f}")
 
 	# 2) CLIP score (image-prompt alignment)
-	log("="*60)
-	log("STAGE 2/3: Loading CLIP model and computing scores...")
-	log("="*60)
-	log("Loading CLIP model...")
-	log(f"  Loading CLIPProcessor from: {CLIP_MODEL_ID}")
-	processor = CLIPProcessor.from_pretrained(CLIP_MODEL_ID, local_files_only=True)
-	log(f"  ✓ CLIPProcessor loaded")
+	# log("="*60)
+	# log("STAGE 2/3: Loading CLIP model and computing scores...")
+	# log("="*60)
+	# log("Loading CLIP model...")
+	# log(f"  Loading CLIPProcessor from: {CLIP_MODEL_ID}")
+	# processor = CLIPProcessor.from_pretrained(CLIP_MODEL_ID, local_files_only=True)
+	# log(f"  ✓ CLIPProcessor loaded")
 	
-	log(f"  Loading CLIPModel from: {CLIP_MODEL_ID}")
-	model = CLIPModel.from_pretrained(CLIP_MODEL_ID, local_files_only=True).to(device).eval()
-	log(f"  ✓ CLIPModel loaded and moved to {device}")
-	log("✓ CLIP model fully loaded")
+	# log(f"  Loading CLIPModel from: {CLIP_MODEL_ID}")
+	# model = CLIPModel.from_pretrained(CLIP_MODEL_ID, local_files_only=True).to(device).eval()
+	# log(f"  ✓ CLIPModel loaded and moved to {device}")
+	# log("✓ CLIP model fully loaded")
 
-	log("Loading metadata prompts...")
-	stem_to_prompt = load_metadata_prompts(METADATA_JSONL_PATH)
-	log(f"✓ Loaded {len(stem_to_prompt)} prompts")
+	# log("Loading metadata prompts...")
+	# stem_to_prompt = load_metadata_prompts(METADATA_JSONL_PATH)
+	# log(f"✓ Loaded {len(stem_to_prompt)} prompts")
 
-	log("Computing CLIP scores for ControlNet...")
-	clip_controlnet, used_cn, skipped_cn = clip_score_for_folder(
-		CONTROLNET_IMAGES_DIR,
-		stem_to_prompt,
-		model,
-		processor,
-		device,
-	)
-	log(f"✓ ControlNet CLIP: {clip_controlnet:.4f} [used={used_cn}, skipped={skipped_cn}]")
+	# log("Computing CLIP scores for ControlNet...")
+	# clip_controlnet, used_cn, skipped_cn = clip_score_for_folder(
+	# 	CONTROLNET_IMAGES_DIR,
+	# 	stem_to_prompt,
+	# 	model,
+	# 	processor,
+	# 	device,
+	# )
+	# log(f"✓ ControlNet CLIP: {clip_controlnet:.4f} [used={used_cn}, skipped={skipped_cn}]")
 	
-	log("Computing CLIP scores for SD1.5...")
-	clip_sd15, used_sd, skipped_sd = clip_score_for_folder(
-		SD15_IMAGES_DIR,
-		stem_to_prompt,
-		model,
-		processor,
-		device,
-	)
-	log(f"✓ SD1.5 CLIP: {clip_sd15:.4f} [used={used_sd}, skipped={skipped_sd}]")
+	# log("Computing CLIP scores for SD1.5...")
+	# clip_sd15, used_sd, skipped_sd = clip_score_for_folder(
+	# 	SD15_IMAGES_DIR,
+	# 	stem_to_prompt,
+	# 	model,
+	# 	processor,
+	# 	device,
+	# )
+	# log(f"✓ SD1.5 CLIP: {clip_sd15:.4f} [used={used_sd}, skipped={skipped_sd}]")
 
 	# 3) CLIP aesthetic scores
 	log("="*60)
@@ -566,8 +576,7 @@ def main() -> None:
 	report_lines.append(f"  SD1.5 images     : {n_sd15}")
 	report_lines.append("")
 	report_lines.append("Results:")
-	report_lines.append(f"  FID (Real vs ControlNet): {fid_controlnet:.4f}")
-	report_lines.append(f"  FID (Real vs SD1.5)    : {fid_sd15:.4f}")
+	# FID is skipped, so we don't include it
 	report_lines.append(f"  CLIP (ControlNet)      : {clip_controlnet:.4f}  [used={used_cn}, skipped={skipped_cn}]")
 	report_lines.append(f"  CLIP (SD1.5)           : {clip_sd15:.4f}  [used={used_sd}, skipped={skipped_sd}]")
 	report_lines.append(f"  Aesthetic (ControlNet) : {aes_controlnet:.4f}")
