@@ -228,11 +228,11 @@ def clip_score_for_folder(
 			attention_mask=inputs["attention_mask"],
 		)
 
-		# Extract pooled output if needed
-		if hasattr(image_features, 'pooled_output'):
-			image_features = image_features.pooled_output
-		if hasattr(text_features, 'pooled_output'):
-			text_features = text_features.pooled_output
+		# Extract tensor from output object
+		if not isinstance(image_features, torch.Tensor):
+			image_features = image_features.pooled_output if hasattr(image_features, 'pooled_output') else image_features
+		if not isinstance(text_features, torch.Tensor):
+			text_features = text_features.pooled_output if hasattr(text_features, 'pooled_output') else text_features
 
 		image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 		text_features = text_features / text_features.norm(dim=-1, keepdim=True)
@@ -301,7 +301,11 @@ def clip_aesthetic_score(
             attention_mask=pos_inputs["attention_mask"],
         )
         
-        # Process negative prompts
+        # Extract tensor from output object
+        if not isinstance(pos_image_features, torch.Tensor):
+            pos_image_features = pos_image_features.pooled_output if hasattr(pos_image_features, 'pooled_output') else pos_image_features
+        if not isinstance(pos_text_features, torch.Tensor):
+            pos_text_features = pos_text_features.pooled_output if hasattr(pos_text_features, 'pooled_output') else pos_text_features
         neg_inputs = processor(
             text=negative_prompts, 
             images=pil_images, 
@@ -317,11 +321,11 @@ def clip_aesthetic_score(
             attention_mask=neg_inputs["attention_mask"],
         )
         
-        # Extract pooled output if needed
-        if hasattr(neg_image_features, 'pooled_output'):
-            neg_image_features = neg_image_features.pooled_output
-        if hasattr(neg_text_features, 'pooled_output'):
-            neg_text_features = neg_text_features.pooled_output
+        # Extract tensor from output object
+        if not isinstance(neg_image_features, torch.Tensor):
+            neg_image_features = neg_image_features.pooled_output if hasattr(neg_image_features, 'pooled_output') else neg_image_features
+        if not isinstance(neg_text_features, torch.Tensor):
+            neg_text_features = neg_text_features.pooled_output if hasattr(neg_text_features, 'pooled_output') else neg_text_features
         
         # Normalize
         neg_image_features = neg_image_features / neg_image_features.norm(dim=-1, keepdim=True)
@@ -447,13 +451,14 @@ def main() -> None:
 
 	# 1) FID with pytorch-fid
 	log("="*60)
-	log("STAGE 1/3: Computing FID with pytorch-fid...")
-	log("="*60)
-	fid_controlnet = fid_score(REAL_IMAGES_DIR, CONTROLNET_IMAGES_DIR, device)
-	log(f"✓ ControlNet FID: {fid_controlnet:.4f}")
+	log("Skipping FID calculation as it can be very slow. Uncomment to enable. --- IGNORE ---")
+	# log("STAGE 1/3: Computing FID with pytorch-fid...")
+	# log("="*60)
+	# fid_controlnet = fid_score(REAL_IMAGES_DIR, CONTROLNET_IMAGES_DIR, device)
+	# log(f"✓ ControlNet FID: {fid_controlnet:.4f}")
 	
-	fid_sd15 = fid_score(REAL_IMAGES_DIR, SD15_IMAGES_DIR, device)
-	log(f"✓ SD1.5 FID: {fid_sd15:.4f}")
+	# fid_sd15 = fid_score(REAL_IMAGES_DIR, SD15_IMAGES_DIR, device)
+	# log(f"✓ SD1.5 FID: {fid_sd15:.4f}")
 
 	# 2) CLIP score (image-prompt alignment)
 	log("="*60)
