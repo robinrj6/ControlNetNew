@@ -57,6 +57,52 @@ from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
 
 
+# ======= Adaptive gating and confidence estimation modules ========
+class AdaptiveGate(torch.nn.Module):
+    # Simple MLP-based gating mechanism that takes timestep embedding and block index to produce a gate for each ControlNet feature map
+    def __init__(self, channels, timestep_embed_dim, num_blocks=13):
+        super().__init__()
+        self.depth_embed = torch.nn.Embedding(num_blocks, 32)
+        self.mlp = torch.nn.Sequential(
+            torch.nn.Linear(timestep_embed_dim + 32, 128),
+            torch.nn.SiLU(),
+            torch.nn.Linear(128, channels),
+            torch.nn.Sigmoid()
+        )
+        # Initialize so gates start near 1.0 — behaves like standard ControlNet early in training
+        torch.nn.init.constant_(self.mlp[-2].bias, 2.0)
+
+    def forward(self, controlnet_feature, timestep_emb, block_idx):
+        idx = torch.tensor(block_idx, device=timestep_emb.device)
+        depth_emb = self.depth_embed(idx).unsqueeze(0).expand(timestep_emb.shape[0], -1)
+        combined = torch.cat([timestep_emb, depth_emb], dim=-1)
+        gate = self.mlp(combined)[:, :, None, None]
+        return controlnet_feature * gate
+
+
+class ConditionConfidenceEstimator(torch.nn.Module):
+    # Simple CNN-based confidence estimator that predicts a confidence score for the conditioning image, which can be used to modulate the ControlNet output
+    def __init__(self, in_channels=3):
+        super().__init__()
+        self.encoder = torch.nn.Sequential(
+            torch.nn.Conv2d(in_channels, 16, 3, stride=2, padding=1),
+            torch.nn.SiLU(),
+            torch.nn.Conv2d(16, 32, 3, stride=2, padding=1),
+            torch.nn.SiLU(),
+            torch.nn.Conv2d(32, 64, 3, stride=2, padding=1),
+            torch.nn.SiLU(),
+            torch.nn.AdaptiveAvgPool2d(1),
+            torch.nn.Flatten(),
+            torch.nn.Linear(64, 1),
+            torch.nn.Sigmoid()
+        )
+        torch.nn.init.constant_(self.encoder[-2].bias, 2.0)
+
+    def forward(self, conditioning_image):
+        return self.encoder(conditioning_image)  # (B, 1)
+
+# ====================================================
+
 if is_wandb_available():
     import wandb
 
@@ -136,8 +182,12 @@ def log_validation(
         for _ in range(args.num_validation_images):
             with inference_ctx:
                 image = pipeline(
-                    validation_prompt, validation_image, num_inference_steps=20, generator=generator
-                ).images[0]
+                validation_prompt, 
+                validation_image, 
+                num_inference_steps=20, 
+                generator=generator,
+                controlnet_conditioning_scale=1.0  # Force abide to control images
+            ).images[0]
 
             images.append(image)
 
@@ -584,6 +634,22 @@ def parse_args(input_args=None):
             " more information see https://huggingface.co/docs/accelerate/v0.17.0/en/package_reference/accelerator#accelerate.Accelerator"
         ),
     )
+    parser.add_argument(
+        "--use_adaptive_gates",
+        action="store_true",
+        help="Enable adaptive timestep-depth gating on ControlNet outputs."
+    )
+    parser.add_argument(
+        "--use_confidence_estimator",
+        action="store_true",
+        help="Enable condition confidence estimator to scale conditioning signal."
+    )
+    parser.add_argument(
+        "--corruption_prob",
+        type=float,
+        default=0.0,
+        help="Probability of corrupting conditioning image during training (0.0 to 1.0)."
+    )
 
     if input_args is not None:
         args = parser.parse_args(input_args)
@@ -843,6 +909,40 @@ def main(args):
     else:
         logger.info("Initializing controlnet weights from unet")
         controlnet = ControlNetModel.from_unet(unet)
+    # ControlNet timestep embedding dim = block_out_channels[0] * 4
+    timestep_embed_dim = controlnet.config.block_out_channels[0] * 4
+
+    # 12 down block outputs + 1 mid block = 13 total
+    # Channel sizes come from ControlNet's down block output channels
+    down_block_channels = [
+        controlnet.config.block_out_channels[0],   # 320
+        controlnet.config.block_out_channels[0],   # 320
+        controlnet.config.block_out_channels[0],   # 320
+        controlnet.config.block_out_channels[1],   # 640
+        controlnet.config.block_out_channels[1],   # 640
+        controlnet.config.block_out_channels[1],   # 640
+        controlnet.config.block_out_channels[2],   # 1280
+        controlnet.config.block_out_channels[2],   # 1280
+        controlnet.config.block_out_channels[2],   # 1280
+        controlnet.config.block_out_channels[2],   # 1280
+        controlnet.config.block_out_channels[2],   # 1280
+        controlnet.config.block_out_channels[2],   # 1280
+    ]
+
+    adaptive_gates = None
+    confidence_estimator = None
+
+    if args.use_adaptive_gates:
+        adaptive_gates = torch.nn.ModuleList([
+            AdaptiveGate(channels=ch, timestep_embed_dim=timestep_embed_dim, num_blocks=13)
+            for ch in down_block_channels
+        ]).to(accelerator.device)
+        logger.info("Initialized adaptive gates")
+
+    if args.use_confidence_estimator:
+        logger.info("Initialized confidence estimator")
+        confidence_estimator = ConditionConfidenceEstimator(in_channels=3).to(accelerator.device)
+    
 
     # Taken from [Sayak Paul's Diffusers PR #6511](https://github.com/huggingface/diffusers/pull/6511/files)
     def unwrap_model(model):
@@ -856,15 +956,24 @@ def main(args):
         def save_model_hook(models, weights, output_dir):
             if accelerator.is_main_process:
                 i = len(weights) - 1
-
                 while len(weights) > 0:
                     weights.pop()
                     model = models[i]
-
                     sub_dir = "controlnet"
                     model.save_pretrained(os.path.join(output_dir, sub_dir))
-
                     i -= 1
+                
+                # Save new modules separately
+                if adaptive_gates is not None:
+                    torch.save(
+                        adaptive_gates.state_dict(),
+                        os.path.join(output_dir, "adaptive_gates.pt")
+                    )
+                if confidence_estimator is not None:
+                    torch.save(
+                        confidence_estimator.state_dict(),
+                        os.path.join(output_dir, "confidence_estimator.pt")
+                    )
 
         def load_model_hook(models, input_dir):
             while len(models) > 0:
@@ -938,7 +1047,11 @@ def main(args):
         optimizer_class = torch.optim.AdamW
 
     # Optimizer creation
-    params_to_optimize = controlnet.parameters()
+    params_to_optimize = list(controlnet.parameters())
+    if adaptive_gates is not None:
+        params_to_optimize += list(adaptive_gates.parameters())
+    if confidence_estimator is not None:
+        params_to_optimize += list(confidence_estimator.parameters())
     optimizer = optimizer_class(
         params_to_optimize,
         lr=args.learning_rate,
@@ -1070,6 +1183,24 @@ def main(args):
     )
 
     image_logs = None
+    def corrupt_conditioning(conditioning_image, corruption_prob):
+        """Randomly corrupt conditioning images during training."""
+        if random.random() > corruption_prob:
+            return conditioning_image
+        
+        corruption_type = random.choice(['noise', 'dropout', 'blur'])
+        
+        if corruption_type == 'noise':
+            noise = torch.randn_like(conditioning_image) * 0.3
+            return torch.clamp(conditioning_image + noise, 0, 1)
+        elif corruption_type == 'dropout':
+            mask = (torch.rand_like(conditioning_image) > 0.5).float()
+            return conditioning_image * mask
+        else:  # blur
+            # Simple box blur via avg pool
+            B, C, H, W = conditioning_image.shape
+            blurred = F.avg_pool2d(conditioning_image, kernel_size=7, stride=1, padding=3)
+            return blurred
     for epoch in range(first_epoch, args.num_train_epochs):
         for step, batch in enumerate(train_dataloader):
             with accelerator.accumulate(controlnet):
@@ -1095,13 +1226,40 @@ def main(args):
 
                 controlnet_image = batch["conditioning_pixel_values"].to(dtype=weight_dtype)
 
+                # Optionally corrupt conditioning during training
+                if args.corruption_prob > 0:
+                    controlnet_image_input = corrupt_conditioning(controlnet_image, args.corruption_prob)
+                else:
+                    controlnet_image_input = controlnet_image
+
                 down_block_res_samples, mid_block_res_sample = controlnet(
                     noisy_latents,
                     timesteps,
                     encoder_hidden_states=encoder_hidden_states,
-                    controlnet_cond=controlnet_image,
+                    controlnet_cond=controlnet_image_input,
                     return_dict=False,
                 )
+
+                # Apply adaptive gates if enabled
+                if adaptive_gates is not None:
+                    # Get timestep embedding from the controlnet
+                    # timesteps shape: (B,) — embed using same sinusoidal embedding as controlnet
+                    raw_controlnet = accelerator.unwrap_model(controlnet)
+                    t_emb = raw_controlnet.time_proj(timesteps)
+                    t_emb = raw_controlnet.time_embedding(t_emb)  # (B, timestep_embed_dim)
+
+                    gated_samples = []
+                    for i, (sample, gate) in enumerate(zip(down_block_res_samples, adaptive_gates)):
+                        gated_samples.append(gate(sample, t_emb, block_idx=i))
+                    down_block_res_samples = gated_samples
+
+                # Apply confidence estimator if enabled
+                if confidence_estimator is not None:
+                    confidence = confidence_estimator(controlnet_image_input)  # (B, 1)
+                    down_block_res_samples = [
+                        s * confidence[:, :, None, None] for s in down_block_res_samples
+                    ]
+                    mid_block_res_sample = mid_block_res_sample * confidence[:, :, None, None]
 
                 # Predict the noise residual
                 model_pred = unet(
@@ -1126,7 +1284,11 @@ def main(args):
 
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
-                    params_to_clip = controlnet.parameters()
+                    params_to_clip = list(controlnet.parameters())
+                    if adaptive_gates is not None:
+                        params_to_clip += list(adaptive_gates.parameters())
+                    if confidence_estimator is not None:
+                        params_to_clip += list(confidence_estimator.parameters())
                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
                 optimizer.step()
                 lr_scheduler.step()

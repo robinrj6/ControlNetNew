@@ -29,20 +29,18 @@ accelerate launch train_controlnet.py \
  --caption_column="text" \
  --conditioning_image_column="conditioning_image" \
  --resolution=512 \
- --mixed_precision="fp16" \
  --dataloader_num_workers=2 \
- --lr_warmup_steps=300 \
- --lr_scheduler=cosine \
  --learning_rate=1e-5 \
- --validation_steps=500 \
+ --validation_steps=1000 \
  --num_validation_images=2 \
- --validation_image "./000000000285.png" "./000000001584.png" \
- --validation_prompt "A close up picture of a brown bear's face." "A red double decker bus driving down a city street." \
+ --validation_image "./conditioning_image_1.png" "./conditioning_image_2.png" \
+ --validation_prompt "red circle with blue background" "cyan circle with brown floral background" \
  --train_batch_size=1 \
  --gradient_accumulation_steps=4 \
  --gradient_checkpointing \
  --checkpointing_steps=1000 \
  --use_8bit_adam \
  --enable_xformers_memory_efficient_attention \
- --set_grads_to_none \
- --proportion_empty_prompts=0.05
+ --use_adaptive_gates \
+ --use_confidence_estimator \
+ --corruption_prob=0.2
