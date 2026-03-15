@@ -319,12 +319,13 @@ def clip_aesthetic_score(
         if not isinstance(pos_text_features, torch.Tensor) and hasattr(pos_text_features, 'pooled_output'):
             pos_text_features = pos_text_features.pooled_output
         
-        # Normalize
+        # Normalize before averaging
         pos_image_features = pos_image_features / pos_image_features.norm(dim=-1, keepdim=True)
         pos_text_features = pos_text_features / pos_text_features.norm(dim=-1, keepdim=True)
         
-        # Average text features across prompts
+        # Average text features across prompts, then re-normalize
         pos_text_features = pos_text_features.mean(dim=0, keepdim=True)
+        pos_text_features = pos_text_features / pos_text_features.norm(dim=-1, keepdim=True)
         neg_inputs = processor(
             text=negative_prompts, 
             images=pil_images, 
@@ -351,12 +352,13 @@ def clip_aesthetic_score(
         if not isinstance(neg_text_features, torch.Tensor) and hasattr(neg_text_features, 'pooled_output'):
             neg_text_features = neg_text_features.pooled_output
         
-        # Normalize
+        # Normalize before averaging
         neg_image_features = neg_image_features / neg_image_features.norm(dim=-1, keepdim=True)
         neg_text_features = neg_text_features / neg_text_features.norm(dim=-1, keepdim=True)
         
-        # Average text features across prompts
+        # Average text features across prompts, then re-normalize
         neg_text_features = neg_text_features.mean(dim=0, keepdim=True)
+        neg_text_features = neg_text_features / neg_text_features.norm(dim=-1, keepdim=True)
         
         # Aesthetic score = positive alignment - negative alignment
         pos_scores = (pos_image_features * pos_text_features).mean(dim=1)
