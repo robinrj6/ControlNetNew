@@ -480,7 +480,7 @@ def main() -> None:
 
 	# 1) FID with pytorch-fid
 	log("="*60)
-	log("Skipping FID calculation as it can be very slow. Uncomment to enable. --- IGNORE ---")
+	# log("Skipping FID calculation as it can be very slow. Uncomment to enable. --- IGNORE ---")
 	log("STAGE 1/3: Computing FID with pytorch-fid...")
 	log("="*60)
 	fid_controlnet = fid_score(REAL_IMAGES_DIR, CONTROLNET_IMAGES_DIR, device)
