@@ -228,11 +228,18 @@ def clip_score_for_folder(
 			attention_mask=inputs["attention_mask"],
 		)
 
-		# Extract tensor from output object
-		if not isinstance(image_features, torch.Tensor):
-			image_features = image_features.pooled_output if hasattr(image_features, 'pooled_output') else image_features
-		if not isinstance(text_features, torch.Tensor):
-			text_features = text_features.pooled_output if hasattr(text_features, 'pooled_output') else text_features
+		# Ensure we have tensors (extract from output objects)
+		if hasattr(image_features, '__getitem__'):
+			# It's a BaseModelOutputWithPooling or similar
+			image_features = image_features[-1] if len(image_features) > 0 else image_features
+		if hasattr(text_features, '__getitem__'):
+			text_features = text_features[-1] if len(text_features) > 0 else text_features
+		
+		# Further extraction if still not a tensor
+		if not isinstance(image_features, torch.Tensor) and hasattr(image_features, 'pooled_output'):
+			image_features = image_features.pooled_output
+		if not isinstance(text_features, torch.Tensor) and hasattr(text_features, 'pooled_output'):
+			text_features = text_features.pooled_output
 
 		image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 		text_features = text_features / text_features.norm(dim=-1, keepdim=True)
@@ -301,11 +308,16 @@ def clip_aesthetic_score(
             attention_mask=pos_inputs["attention_mask"],
         )
         
-        # Extract tensor from output object
-        if not isinstance(pos_image_features, torch.Tensor):
-            pos_image_features = pos_image_features.pooled_output if hasattr(pos_image_features, 'pooled_output') else pos_image_features
-        if not isinstance(pos_text_features, torch.Tensor):
-            pos_text_features = pos_text_features.pooled_output if hasattr(pos_text_features, 'pooled_output') else pos_text_features
+        # Ensure we have tensors (extract from output objects)
+        if hasattr(pos_image_features, '__getitem__'):
+            pos_image_features = pos_image_features[-1] if len(pos_image_features) > 0 else pos_image_features
+        if hasattr(pos_text_features, '__getitem__'):
+            pos_text_features = pos_text_features[-1] if len(pos_text_features) > 0 else pos_text_features
+        
+        if not isinstance(pos_image_features, torch.Tensor) and hasattr(pos_image_features, 'pooled_output'):
+            pos_image_features = pos_image_features.pooled_output
+        if not isinstance(pos_text_features, torch.Tensor) and hasattr(pos_text_features, 'pooled_output'):
+            pos_text_features = pos_text_features.pooled_output
         neg_inputs = processor(
             text=negative_prompts, 
             images=pil_images, 
@@ -321,11 +333,16 @@ def clip_aesthetic_score(
             attention_mask=neg_inputs["attention_mask"],
         )
         
-        # Extract tensor from output object
-        if not isinstance(neg_image_features, torch.Tensor):
-            neg_image_features = neg_image_features.pooled_output if hasattr(neg_image_features, 'pooled_output') else neg_image_features
-        if not isinstance(neg_text_features, torch.Tensor):
-            neg_text_features = neg_text_features.pooled_output if hasattr(neg_text_features, 'pooled_output') else neg_text_features
+        # Ensure we have tensors (extract from output objects)
+        if hasattr(neg_image_features, '__getitem__'):
+            neg_image_features = neg_image_features[-1] if len(neg_image_features) > 0 else neg_image_features
+        if hasattr(neg_text_features, '__getitem__'):
+            neg_text_features = neg_text_features[-1] if len(neg_text_features) > 0 else neg_text_features
+        
+        if not isinstance(neg_image_features, torch.Tensor) and hasattr(neg_image_features, 'pooled_output'):
+            neg_image_features = neg_image_features.pooled_output
+        if not isinstance(neg_text_features, torch.Tensor) and hasattr(neg_text_features, 'pooled_output'):
+            neg_text_features = neg_text_features.pooled_output
         
         # Normalize
         neg_image_features = neg_image_features / neg_image_features.norm(dim=-1, keepdim=True)
