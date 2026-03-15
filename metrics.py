@@ -80,9 +80,8 @@ def list_images(folder: Path) -> List[Path]:
 def load_metadata_prompts(metadata_jsonl: Path) -> Dict[str, str]:
 	"""
 	Build a mapping from image stem -> prompt.
-	Supports both:
-	  - file_name: images/000000123456.jpg
-	  - conditioning_file_name: edges/000000123456.png
+	Extracts 'text' field and maps image stems to prompts.
+	Supports both file_name and image_file_name keys.
 	"""
 	if not metadata_jsonl.exists():
 		raise FileNotFoundError(f"Metadata file not found: {metadata_jsonl}")
@@ -103,7 +102,8 @@ def load_metadata_prompts(metadata_jsonl: Path) -> Dict[str, str]:
 				continue
 			text = text.strip()
 
-			for key in ("file_name", "conditioning_file_name"):
+			# Try both key variants for image filenames
+			for key in ("image_file_name", "file_name", "conditioning_image_file_name", "conditioning_file_name"):
 				value = row.get(key)
 				if isinstance(value, str) and value.strip():
 					stem = Path(value).stem
@@ -228,6 +228,12 @@ def clip_score_for_folder(
 			attention_mask=inputs["attention_mask"],
 		)
 
+		# Extract pooled output if needed
+		if hasattr(image_features, 'pooled_output'):
+			image_features = image_features.pooled_output
+		if hasattr(text_features, 'pooled_output'):
+			text_features = text_features.pooled_output
+
 		image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 		text_features = text_features / text_features.norm(dim=-1, keepdim=True)
 
@@ -311,10 +317,13 @@ def clip_aesthetic_score(
             attention_mask=neg_inputs["attention_mask"],
         )
         
-        # Normalize
-        pos_image_features = pos_image_features / pos_image_features.norm(dim=-1, keepdim=True)
-        pos_text_features = pos_text_features / pos_text_features.norm(dim=-1, keepdim=True)
+        # Extract pooled output if needed
+        if hasattr(neg_image_features, 'pooled_output'):
+            neg_image_features = neg_image_features.pooled_output
+        if hasattr(neg_text_features, 'pooled_output'):
+            neg_text_features = neg_text_features.pooled_output
         
+        # Normalize
         neg_image_features = neg_image_features / neg_image_features.norm(dim=-1, keepdim=True)
         neg_text_features = neg_text_features / neg_text_features.norm(dim=-1, keepdim=True)
         
