@@ -1,16 +1,16 @@
 #!/bin/bash
-#SBATCH --job-name=controlnet_train_depth_1e-5
+#SBATCH --job-name=controlnet_train_canny_experiment
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --time=20:00:00
-#SBATCH --output=logs/controlnet_train_depth_1e-5_%j.log
-#SBATCH --error=logs/controlnet_train_depth_1e-5_%j.err
+#SBATCH --time=24:00:00
+#SBATCH --output=logs/controlnet_train_canny_experiment_%j.log
+#SBATCH --error=logs/controlnet_train_canny_experiment_%j.err
 
 export MODEL_DIR="models/sd15/"
-export OUTPUT_DIR="output/depth_coco_controlnet_1e-5"
-export DATASET_PATH="datasets/coco/depth/"
+export OUTPUT_DIR="output/canny_coco_controlnet_experiment/"
+export DATASET_PATH="datasets/coco/train/"
 
 export HF_HOME="/home/woody/rlvl/rlvl165v/.cache/huggingface"
 export HF_DATASETS_CACHE="$HF_HOME/datasets"
