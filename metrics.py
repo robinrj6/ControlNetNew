@@ -488,42 +488,42 @@ def main() -> None:
 	# log(f"✓ SD1.5 FID: {fid_sd15:.4f}")
 
 	# 2) CLIP score (image-prompt alignment)
-	# log("="*60)
-	# log("STAGE 2/3: Loading CLIP model and computing scores...")
-	# log("="*60)
-	# log("Loading CLIP model...")
-	# log(f"  Loading CLIPProcessor from: {CLIP_MODEL_ID}")
-	# processor = CLIPProcessor.from_pretrained(CLIP_MODEL_ID, local_files_only=True)
-	# log(f"  ✓ CLIPProcessor loaded")
+	log("="*60)
+	log("STAGE 2/3: Loading CLIP model and computing scores...")
+	log("="*60)
+	log("Loading CLIP model...")
+	log(f"  Loading CLIPProcessor from: {CLIP_MODEL_ID}")
+	processor = CLIPProcessor.from_pretrained(CLIP_MODEL_ID, local_files_only=True)
+	log(f"  ✓ CLIPProcessor loaded")
 	
-	# log(f"  Loading CLIPModel from: {CLIP_MODEL_ID}")
-	# model = CLIPModel.from_pretrained(CLIP_MODEL_ID, local_files_only=True).to(device).eval()
-	# log(f"  ✓ CLIPModel loaded and moved to {device}")
-	# log("✓ CLIP model fully loaded")
+	log(f"  Loading CLIPModel from: {CLIP_MODEL_ID}")
+	model = CLIPModel.from_pretrained(CLIP_MODEL_ID, local_files_only=True).to(device).eval()
+	log(f"  ✓ CLIPModel loaded and moved to {device}")
+	log("✓ CLIP model fully loaded")
 
-	# log("Loading metadata prompts...")
-	# stem_to_prompt = load_metadata_prompts(METADATA_JSONL_PATH)
-	# log(f"✓ Loaded {len(stem_to_prompt)} prompts")
+	log("Loading metadata prompts...")
+	stem_to_prompt = load_metadata_prompts(METADATA_JSONL_PATH)
+	log(f"✓ Loaded {len(stem_to_prompt)} prompts")
 
-	# log("Computing CLIP scores for ControlNet...")
-	# clip_controlnet, used_cn, skipped_cn = clip_score_for_folder(
-	# 	CONTROLNET_IMAGES_DIR,
-	# 	stem_to_prompt,
-	# 	model,
-	# 	processor,
-	# 	device,
-	# )
-	# log(f"✓ ControlNet CLIP: {clip_controlnet:.4f} [used={used_cn}, skipped={skipped_cn}]")
+	log("Computing CLIP scores for ControlNet...")
+	clip_controlnet, used_cn, skipped_cn = clip_score_for_folder(
+		CONTROLNET_IMAGES_DIR,
+		stem_to_prompt,
+		model,
+		processor,
+		device,
+	)
+	log(f"✓ ControlNet CLIP: {clip_controlnet:.4f} [used={used_cn}, skipped={skipped_cn}]")
 	
-	# log("Computing CLIP scores for SD1.5...")
-	# clip_sd15, used_sd, skipped_sd = clip_score_for_folder(
-	# 	SD15_IMAGES_DIR,
-	# 	stem_to_prompt,
-	# 	model,
-	# 	processor,
-	# 	device,
-	# )
-	# log(f"✓ SD1.5 CLIP: {clip_sd15:.4f} [used={used_sd}, skipped={skipped_sd}]")
+	log("Computing CLIP scores for SD1.5...")
+	clip_sd15, used_sd, skipped_sd = clip_score_for_folder(
+		SD15_IMAGES_DIR,
+		stem_to_prompt,
+		model,
+		processor,
+		device,
+	)
+	log(f"✓ SD1.5 CLIP: {clip_sd15:.4f} [used={used_sd}, skipped={skipped_sd}]")
 
 	# 3) CLIP aesthetic scores
 	log("="*60)
