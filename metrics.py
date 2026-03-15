@@ -269,18 +269,9 @@ def clip_aesthetic_score(
     all_images = list_images(image_dir)
     log(f"  Found {len(all_images)} images in {image_dir}")
     
-    # Aesthetic prompts
-    aesthetic_prompts = [
-        "a photo of good composition",
-        "a photo of high quality",
-        "a professional photograph",
-    ]
-    
-    negative_prompts = [
-        "a photo of poor quality",
-        "a badly composed photo",
-        "an amateur photo",
-    ]
+    # Single, strong aesthetic prompts (more contrast)
+    pos_prompt = "a high quality, professional, aesthetically pleasing photo"
+    neg_prompt = "a low quality, blurry, poorly composed photo"
     
     total_score = 0.0
     count = 0
@@ -292,9 +283,9 @@ def clip_aesthetic_score(
         batch_num += 1
         pil_images = [Image.open(img_path).convert("RGB") for img_path in batch]
         
-        # Process positive prompts
+        # Process positive prompt
         pos_inputs = processor(
-            text=aesthetic_prompts, 
+            text=[pos_prompt], 
             images=pil_images, 
             return_tensors="pt", 
             padding=True, 
@@ -323,11 +314,9 @@ def clip_aesthetic_score(
         pos_image_features = pos_image_features / pos_image_features.norm(dim=-1, keepdim=True)
         pos_text_features = pos_text_features / pos_text_features.norm(dim=-1, keepdim=True)
         
-        # Average text features across prompts, then re-normalize
-        pos_text_features = pos_text_features.mean(dim=0, keepdim=True)
-        pos_text_features = pos_text_features / pos_text_features.norm(dim=-1, keepdim=True)
+        # No averaging needed - single prompt
         neg_inputs = processor(
-            text=negative_prompts, 
+            text=[neg_prompt], 
             images=pil_images, 
             return_tensors="pt", 
             padding=True, 
@@ -356,9 +345,7 @@ def clip_aesthetic_score(
         neg_image_features = neg_image_features / neg_image_features.norm(dim=-1, keepdim=True)
         neg_text_features = neg_text_features / neg_text_features.norm(dim=-1, keepdim=True)
         
-        # Average text features across prompts, then re-normalize
-        neg_text_features = neg_text_features.mean(dim=0, keepdim=True)
-        neg_text_features = neg_text_features / neg_text_features.norm(dim=-1, keepdim=True)
+        # No averaging needed - single prompt
         
         # Aesthetic score = positive alignment - negative alignment
         pos_scores = (pos_image_features * pos_text_features).mean(dim=1)
