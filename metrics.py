@@ -348,8 +348,8 @@ def clip_aesthetic_score(
         # No averaging needed - single prompt
         
         # Aesthetic score = positive alignment - negative alignment
-        pos_scores = (pos_image_features * pos_text_features).mean(dim=1)
-        neg_scores = (neg_image_features * neg_text_features).mean(dim=1)
+        pos_scores = (pos_image_features * pos_text_features).sum(dim=1)
+        neg_scores = (neg_image_features * neg_text_features).sum(dim=1)
         
         aesthetic = (pos_scores - neg_scores) / 2.0  # Normalize to roughly 0-1
         
