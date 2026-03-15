@@ -915,18 +915,18 @@ def main(args):
     # 12 down block outputs + 1 mid block = 13 total
     # Channel sizes come from ControlNet's down block output channels
     down_block_channels = [
-        controlnet.config.block_out_channels[0],   # 320
-        controlnet.config.block_out_channels[0],   # 320
-        controlnet.config.block_out_channels[0],   # 320
-        controlnet.config.block_out_channels[1],   # 640
-        controlnet.config.block_out_channels[1],   # 640
-        controlnet.config.block_out_channels[1],   # 640
-        controlnet.config.block_out_channels[2],   # 1280
-        controlnet.config.block_out_channels[2],   # 1280
-        controlnet.config.block_out_channels[2],   # 1280
-        controlnet.config.block_out_channels[2],   # 1280
-        controlnet.config.block_out_channels[2],   # 1280
-        controlnet.config.block_out_channels[2],   # 1280
+        controlnet.config.block_out_channels[0],   # 320 (initial conv output)
+        controlnet.config.block_out_channels[0],   # 320 (block0 layer1)
+        controlnet.config.block_out_channels[0],   # 320 (block0 layer2)
+        controlnet.config.block_out_channels[0],   # 320 (block0 downsample)
+        controlnet.config.block_out_channels[1],   # 640 (block1 layer1)
+        controlnet.config.block_out_channels[1],   # 640 (block1 layer2)
+        controlnet.config.block_out_channels[1],   # 640 (block1 downsample)
+        controlnet.config.block_out_channels[2],   # 1280 (block2 layer1)
+        controlnet.config.block_out_channels[2],   # 1280 (block2 layer2)
+        controlnet.config.block_out_channels[2],   # 1280 (block2 downsample)
+        controlnet.config.block_out_channels[3],   # 1280 (block3 layer1)
+        controlnet.config.block_out_channels[3],   # 1280 (block3 layer2)
     ]
 
     adaptive_gates = None
