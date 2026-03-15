@@ -364,6 +364,12 @@ def clip_aesthetic_score(
         
         aesthetic = (pos_scores - neg_scores) / 2.0  # Normalize to roughly 0-1
         
+        # Debug: log sample scores for first batch
+        if batch_num == 1:
+            log(f"    DEBUG: pos_scores sample: {pos_scores[:3]}")
+            log(f"    DEBUG: neg_scores sample: {neg_scores[:3]}")
+            log(f"    DEBUG: aesthetic sample: {aesthetic[:3]}")
+        
         total_score += aesthetic.sum().item()
         count += len(batch)
         
@@ -380,10 +386,13 @@ def conditioning_fidelity(
     device: torch.device,
 ) -> Tuple[float, int]:
 	"""
-	Compute conditioning fidelity using SSIM between conditioning and generated images.
-	Measures how well the generated images preserve the structure of conditioning images.
+	Compute conditioning fidelity using SSIM between edge maps.
+	Extracts edges from generated images and compares with conditioning edges.
 	Returns (mean_fidelity, num_pairs).
 	"""
+	import cv2
+	import numpy as np
+	
 	conditioning_images = list_images(conditioning_dir)
 	log(f"  Found {len(conditioning_images)} conditioning images in {conditioning_dir}")
 	
@@ -398,21 +407,25 @@ def conditioning_fidelity(
 			continue
 		
 		try:
-			# Load images
-			cond_img = Image.open(cond_path).convert("RGB")
+			# Load conditioning edge map
+			cond_img = Image.open(cond_path).convert("L")  # Convert to grayscale
+			cond_array = np.array(cond_img).astype(np.float32) / 255.0
+			
+			# Load generated image and extract edges
 			gen_img = Image.open(gen_path).convert("RGB")
+			gen_cv = cv2.cvtColor(np.array(gen_img), cv2.COLOR_RGB2BGR)
+			gen_gray = cv2.cvtColor(gen_cv, cv2.COLOR_BGR2GRAY)
+			
+			# Extract edges from generated image using Canny
+			gen_edges = cv2.Canny(gen_gray, 50, 150)
+			gen_array = gen_edges.astype(np.float32) / 255.0
 			
 			# Ensure same size
-			if cond_img.size != gen_img.size:
-				gen_img = gen_img.resize(cond_img.size, Image.LANCZOS)
+			if cond_array.shape != gen_array.shape:
+				gen_array = cv2.resize(gen_array, (cond_array.shape[1], cond_array.shape[0]))
 			
-			# Convert to numpy for SSIM
-			import numpy as np
-			cond_array = np.array(cond_img).astype(np.float32) / 255.0
-			gen_array = np.array(gen_img).astype(np.float32) / 255.0
-			
-			# Compute SSIM (higher is better, range 0-1)
-			score = ssim(cond_array, gen_array, channel_axis=2, data_range=1.0)
+			# Compute SSIM between edge maps (higher is better, range 0-1)
+			score = ssim(cond_array, gen_array, data_range=1.0)
 			fidelity_scores.append(score)
 			matched_pairs += 1
 			
