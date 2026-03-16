@@ -3,8 +3,8 @@ import random
 import cv2 as cv
 from tqdm import tqdm
 
-original = "datasets/coco/depth/images/"
-copy = "datasets/coco/depth/conditioning_images/"
+original = "datasets/coco/train/images/"
+copy = "datasets/coco/train/conditioning_images/"
 
 original_files = set(os.path.splitext(f)[0] for f in os.listdir(original) if f.endswith('.jpg'))
 copy_files = set(os.path.splitext(f)[0] for f in os.listdir(copy) if f.endswith('.png'))
