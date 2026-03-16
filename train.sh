@@ -43,4 +43,5 @@ accelerate launch train_controlnet.py \
  --enable_xformers_memory_efficient_attention \
  --use_adaptive_gates \
  --use_confidence_estimator \
- --corruption_prob=0.2
+ --corruption_prob=0.2 \
+ --resume_from_checkpoint="latest"
