@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=controlnet_inference_single_ckpt
+#SBATCH --job-name=controlnet_inference_single_ckpt-cfg=7.5
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

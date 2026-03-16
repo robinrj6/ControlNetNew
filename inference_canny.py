@@ -52,7 +52,7 @@ for checkpoint in checkpoints:
         # generate image
         generator = torch.manual_seed(0)
         image = pipe(
-            prompt, num_inference_steps=50, generator=generator, image=control_image, controlnet_conditioning_scale=1.0
+            prompt, num_inference_steps=50, generator=generator, image=control_image, guidance_scale=7.5, controlnet_conditioning_scale=1.0
         ).images[0]
         
         # Save with checkpoint name
