@@ -19,7 +19,7 @@ def main(args):
     print(f"Loading checkpoint: {checkpoint_name}\n")
     
     # Create output directory for results
-    os.makedirs(f"inference_outputs/{checkpoint_name}_cfg=7.5", exist_ok=True)
+    os.makedirs(f"inference_outputs/{checkpoint_name}_experiment", exist_ok=True)
     
     # Derive paths from parent directory
     metadata_path = os.path.join(args.data_dir, "metadata.jsonl")
@@ -87,7 +87,7 @@ def main(args):
                 ).images[0]
                 
                 # Save image
-                output_path = f"inference_outputs/{checkpoint_name}_cfg=7.5/{image_filename}.png"
+                output_path = f"inference_outputs/{checkpoint_name}_experiment/{image_filename}.png"
                 image.save(output_path)
                 print(f"  ✓ Saved to {output_path}\n")
                 

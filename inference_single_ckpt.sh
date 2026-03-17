@@ -9,5 +9,5 @@
 #SBATCH --error=logs/controlnet_inference_single_ckpt_%j.err
 
 python inference_single_ckpt.py \
- --checkpoint_path="output/canny_model/checkpoint-29000" \
+ --checkpoint_path="output/canny_coco_controlnet_experiment/checkpoint-29000" \
  --data_dir="datasets/coco/depth_val"
