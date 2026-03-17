@@ -47,10 +47,10 @@ def log(msg: str) -> None:
 # =========================
 REAL_IMAGES_DIR = Path("datasets/coco/depth_val/images/")
 CANNY_IMAGES_DIR = Path("datasets/coco/depth_val/conditioning_images/")
-CONTROLNET_IMAGES_DIR = Path("inference_outputs/checkpoint-29000_cfg=7.5/")
+CONTROLNET_IMAGES_DIR = Path("inference_outputs/checkpoint-29000_experiment/")
 SD15_IMAGES_DIR = Path("inference_outputs/sd_only/")
 METADATA_JSONL_PATH = Path("datasets/coco/depth_val/metadata.jsonl")
-REPORT_FILE = Path("results/metrics_report-checkpoint-29000_cfg=7.5.txt")
+REPORT_FILE = Path("results/metrics_report-checkpoint-29000_experiment.txt")
 
 # Optional settings
 CLIP_MODEL_ID = "models/huggingface_cache/hub/models--openai--clip-vit-base-patch32/snapshots/3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268/"
@@ -485,7 +485,6 @@ def main() -> None:
 	log("="*60)
 	fid_controlnet = fid_score(REAL_IMAGES_DIR, CONTROLNET_IMAGES_DIR, device)
 	log(f"✓ ControlNet FID: {fid_controlnet:.4f}")
-	
 	fid_sd15 = fid_score(REAL_IMAGES_DIR, SD15_IMAGES_DIR, device)
 	log(f"✓ SD1.5 FID: {fid_sd15:.4f}")
 
@@ -578,7 +577,8 @@ def main() -> None:
 	report_lines.append(f"  SD1.5 images     : {n_sd15}")
 	report_lines.append("")
 	report_lines.append("Results:")
-	# FID is skipped, so we don't include it
+	report_lines.append(f"  FID (ControlNet)      : {fid_controlnet:.4f}")
+	report_lines.append(f"  FID (SD1.5)           : {fid_sd15:.4f}")	
 	report_lines.append(f"  CLIP (ControlNet)      : {clip_controlnet:.4f}  [used={used_cn}, skipped={skipped_cn}]")
 	report_lines.append(f"  CLIP (SD1.5)           : {clip_sd15:.4f}  [used={used_sd}, skipped={skipped_sd}]")
 	report_lines.append(f"  Aesthetic (ControlNet) : {aes_controlnet:.4f}")
