@@ -47,10 +47,10 @@ def log(msg: str) -> None:
 # =========================
 REAL_IMAGES_DIR = Path("datasets/coco/depth_val/images/")
 CANNY_IMAGES_DIR = Path("datasets/coco/depth_val/conditioning_images/")
-CONTROLNET_IMAGES_DIR = Path("inference_outputs/checkpoint-29000/")
+CONTROLNET_IMAGES_DIR = Path("inference_outputs/checkpoint-29000_cfg=7.5/")
 SD15_IMAGES_DIR = Path("inference_outputs/sd_only/")
 METADATA_JSONL_PATH = Path("datasets/coco/depth_val/metadata.jsonl")
-REPORT_FILE = Path("results/metrics_report.txt")
+REPORT_FILE = Path("results/metrics_report-checkpoint-29000_cfg=7.5.txt")
 
 # Optional settings
 CLIP_MODEL_ID = "models/huggingface_cache/hub/models--openai--clip-vit-base-patch32/snapshots/3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268/"
