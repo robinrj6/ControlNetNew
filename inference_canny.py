@@ -18,11 +18,11 @@ if not checkpoints:
 print(f"Found {len(checkpoints)} checkpoints: {checkpoints}\n")
 
 # Create output directory for results
-os.makedirs("inference_outputs/canny_model_experiment", exist_ok=True)
+os.makedirs("inference_outputs_single_canny_and_depth/canny_model_experiment", exist_ok=True)
 
 control_image = load_image("./000000008532.png").convert("RGB").resize((512, 512))
 # save the control image for reference
-control_image.save("inference_outputs/canny_model_experiment/control_image.png")
+control_image.save("inference_outputs_single_canny_and_depth/canny_model_experiment/control_image.png")
 prompt = "A man with a plaid hat, tie, dress shirt and glasses on."
 
 # Generate images for each checkpoint
@@ -56,7 +56,7 @@ for checkpoint in checkpoints:
         ).images[0]
         
         # Save with checkpoint name
-        output_path = f"inference_outputs/canny_model/{checkpoint}.png"
+        output_path = f"inference_outputs_single_canny_and_depth/canny_model_experiment/{checkpoint}.png"
         image.save(output_path)
         print(f"  ✓ Saved to {output_path}\n")
         
