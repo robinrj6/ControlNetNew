@@ -23,7 +23,7 @@ os.makedirs("inference_outputs_single_canny_and_depth/canny_model_experiment", e
 control_image = load_image("./000000008532.png").convert("RGB").resize((512, 512))
 # save the control image for reference
 control_image.save("inference_outputs_single_canny_and_depth/canny_model_experiment/control_image.png")
-prompt = "A man with a plaid hat, tie, dress shirt and glasses on."
+prompt = " "
 
 # Generate images for each checkpoint
 for checkpoint in checkpoints:
