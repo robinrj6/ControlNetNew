@@ -75,7 +75,7 @@ class AdaptiveGate(torch.nn.Module):
     def forward(self, controlnet_feature, timestep_emb, block_idx):
         idx = torch.tensor(block_idx, device=timestep_emb.device)
         depth_emb = self.depth_embed(idx).unsqueeze(0).expand(timestep_emb.shape[0], -1)
-        combined = torch.cat([timestep_emb, depth_emb], dim=-1)
+        combined = torch.cat([timestep_emb, depth_emb], dim=-1) # This gives the MLP context about when in diffusion we are and where in the network we are.
         gate = self.mlp(combined)[:, :, None, None]
         return controlnet_feature * gate
 
